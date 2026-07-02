@@ -463,12 +463,31 @@
 <script>
 /* ---------- shared helpers ---------- */
 function parseCSV(text){
-  const lines = text.trim().split(/\r?\n/);
-  const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g,''));
-  return lines.slice(1).filter(l => l.trim().length).map(line => {
-    const cells = line.split(',').map(c => c.trim().replace(/^"|"$/g,''));
+  // Parser CSV yang benar: menghormati field berkutip ("...") yang bisa
+  // mengandung koma atau baris baru di dalamnya (mis. teks catatan/footnote).
+  const rowsRaw = [];
+  let row = [], field = '', inQuotes = false;
+  for(let i=0;i<text.length;i++){
+    const c = text[i], next = text[i+1];
+    if(inQuotes){
+      if(c === '"' && next === '"'){ field += '"'; i++; }
+      else if(c === '"'){ inQuotes = false; }
+      else { field += c; }
+    } else {
+      if(c === '"'){ inQuotes = true; }
+      else if(c === ','){ row.push(field); field=''; }
+      else if(c === '\r'){ /* skip */ }
+      else if(c === '\n'){ row.push(field); rowsRaw.push(row); row=[]; field=''; }
+      else { field += c; }
+    }
+  }
+  if(field.length || row.length){ row.push(field); rowsRaw.push(row); }
+  const nonEmpty = rowsRaw.filter(r => r.some(c => String(c).trim() !== ''));
+  if(!nonEmpty.length) return [];
+  const headers = nonEmpty[0].map(h => h.trim());
+  return nonEmpty.slice(1).map(cells => {
     const obj = {};
-    headers.forEach((h,i) => obj[h] = cells[i]);
+    headers.forEach((h,i) => obj[h] = (cells[i] !== undefined ? cells[i].trim() : ''));
     return obj;
   });
 }
@@ -518,15 +537,24 @@ function susutRender(rows){
   const rkKey = findKey(rows[0], ['realisasikumulatif','realisasikum']);
   if(!ulpKey||!bulanKey||!tkKey||!rkKey){ setStatus('susut_status', false, 'Kolom ULP/Bulan/Target_Kumulatif/Realisasi_Kumulatif tidak ditemukan.'); return; }
 
+  const isFilled = v => v!==undefined && v!==null && String(v).trim()!=='';
+
   const data = rows.map(r=>({
-    ulp:r[ulpKey], bulan:r[bulanKey],
+    ulp: String(r[ulpKey]||'').trim(), bulan: String(r[bulanKey]||'').trim(),
     tb: tbKey?num(r[tbKey]):null, rb: rbKey?num(r[rbKey]):null,
-    tk:num(r[tkKey]), rk:num(r[rkKey])
+    tk:num(r[tkKey]), rk:num(r[rkKey]),
+    rkFilled: isFilled(r[rkKey])
   })).filter(d=>d.ulp && d.bulan);
 
   const ulps = [...new Set(data.map(d=>d.ulp))];
   const bulans = [...new Set(data.map(d=>d.bulan))];
-  const lastBulan = bulans[bulans.length-1];
+  // Ambil bulan terakhir yang datanya sudah lengkap terisi untuk SEMUA ULP,
+  // jangan asal ambil baris paling bawah (bisa jadi bulan mendatang yang masih kosong).
+  const filledBulans = bulans.filter(b=>{
+    const rowsB = data.filter(d=>d.bulan===b);
+    return rowsB.length>0 && rowsB.every(d=>d.rkFilled);
+  });
+  const lastBulan = filledBulans.length ? filledBulans[filledBulans.length-1] : bulans[bulans.length-1];
   const lastData = data.filter(d=>d.bulan===lastBulan);
 
   const avgT = lastData.reduce((s,d)=>s+d.tk,0)/lastData.length;
@@ -559,8 +587,8 @@ function susutRender(rows){
     </div>`;
   }).join('');
 
-  // trend bulanan UP3 (rata-rata semua ULP per bulan)
-  const trend = bulans.map(b=>{
+  // trend bulanan UP3 (rata-rata semua ULP per bulan) — hanya bulan yang sudah terisi
+  const trend = filledBulans.map(b=>{
     const rowsB = data.filter(d=>d.bulan===b);
     const avgRb = rowsB.reduce((s,d)=> s+(d.rb!=null?d.rb:d.rk), 0)/rowsB.length;
     return {bulan:b, value:avgRb};
@@ -586,7 +614,7 @@ function susutRender(rows){
     }).join('') + '</tr>';
     tbody += `<tr><td class="label">REALISASI</td>` + bulans.map(b=>{
       const d = data.find(x=>x.ulp===u && x.bulan===b);
-      if(!d) return '<td>-</td>';
+      if(!d || !d.rkFilled) return '<td>-</td>';
       const v = d.rb!=null?d.rb:d.rk;
       const t = d.tb!=null?d.tb:d.tk;
       return `<td class="${v<=t?'good':'bad'}">${v.toFixed(2)}%</td>`;
@@ -600,6 +628,7 @@ function susutRender(rows){
   }).join('') + '</tr>';
   tbody += `<tr class="up3-row"><td class="label" style="color:#cfe0f0;">REALISASI</td>` + bulans.map(b=>{
     const rowsB = data.filter(d=>d.bulan===b);
+    if(!rowsB.every(d=>d.rkFilled)) return '<td>-</td>';
     const avgRb = rowsB.reduce((s,d)=>s+(d.rb!=null?d.rb:d.rk),0)/rowsB.length;
     return `<td>${avgRb.toFixed(2)}%</td>`;
   }).join('') + '</tr>';

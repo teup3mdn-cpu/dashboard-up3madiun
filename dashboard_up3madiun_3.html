@@ -538,13 +538,19 @@ function susutRender(rows){
   if(!ulpKey||!bulanKey||!tkKey||!rkKey){ setStatus('susut_status', false, 'Kolom ULP/Bulan/Target_Kumulatif/Realisasi_Kumulatif tidak ditemukan.'); return; }
 
   const isFilled = v => v!==undefined && v!==null && String(v).trim()!=='';
+  const isUp3Total = ulpName => /^UP3\b/i.test(ulpName.trim());
 
-  const data = rows.map(r=>({
+  const dataAll = rows.map(r=>({
     ulp: String(r[ulpKey]||'').trim(), bulan: String(r[bulanKey]||'').trim(),
     tb: tbKey?num(r[tbKey]):null, rb: rbKey?num(r[rbKey]):null,
     tk:num(r[tkKey]), rk:num(r[rkKey]),
     rkFilled: isFilled(r[rkKey])
   })).filter(d=>d.ulp && d.bulan);
+
+  // Baris "UP3 MADIUN" (atau UP3 ...) adalah total gabungan yang sudah dihitung
+  // berbobot di sheet — dipisah dari data per-ULP supaya tidak ikut jadi ULP ke-8.
+  const data = dataAll.filter(d=>!isUp3Total(d.ulp));
+  const up3Data = dataAll.filter(d=>isUp3Total(d.ulp));
 
   const ulps = [...new Set(data.map(d=>d.ulp))];
   const bulans = [...new Set(data.map(d=>d.bulan))];
@@ -557,8 +563,11 @@ function susutRender(rows){
   const lastBulan = filledBulans.length ? filledBulans[filledBulans.length-1] : bulans[bulans.length-1];
   const lastData = data.filter(d=>d.bulan===lastBulan);
 
-  const avgT = lastData.reduce((s,d)=>s+d.tk,0)/lastData.length;
-  const avgR = lastData.reduce((s,d)=>s+d.rk,0)/lastData.length;
+  // Gunakan baris "UP3 MADIUN" (total berbobot) untuk KPI atas jika tersedia;
+  // kalau tidak ada, fallback ke rata-rata sederhana antar ULP (kurang akurat).
+  const up3Row = up3Data.find(d=>d.bulan===lastBulan);
+  const avgT = up3Row ? up3Row.tk : lastData.reduce((s,d)=>s+d.tk,0)/lastData.length;
+  const avgR = up3Row ? up3Row.rk : lastData.reduce((s,d)=>s+d.rk,0)/lastData.length;
   const pencapaian = avgR ? (avgT/avgR)*100 : 0;
   const diAtas = lastData.filter(d=>d.rk>d.tk);
 
@@ -620,13 +629,20 @@ function susutRender(rows){
       return `<td class="${v<=t?'good':'bad'}">${v.toFixed(2)}%</td>`;
     }).join('') + '</tr>';
   });
-  // UP3 total row (rata-rata)
+  // UP3 total row — pakai baris "UP3 MADIUN" (berbobot) kalau tersedia, kalau tidak fallback rata-rata
   tbody += `<tr class="up3-row"><td rowspan="2">UP3 MADIUN</td><td class="label" style="color:#cfe0f0;">TARGET</td>` + bulans.map(b=>{
+    const d3 = up3Data.find(d=>d.bulan===b);
+    if(d3) return `<td>${(d3.tb!=null?d3.tb:d3.tk).toFixed(2)}%</td>`;
     const rowsB = data.filter(d=>d.bulan===b);
     const avgTb = rowsB.reduce((s,d)=>s+(d.tb!=null?d.tb:d.tk),0)/rowsB.length;
     return `<td>${avgTb.toFixed(2)}%</td>`;
   }).join('') + '</tr>';
   tbody += `<tr class="up3-row"><td class="label" style="color:#cfe0f0;">REALISASI</td>` + bulans.map(b=>{
+    const d3 = up3Data.find(d=>d.bulan===b);
+    if(d3){
+      if(!d3.rkFilled) return '<td>-</td>';
+      return `<td>${(d3.rb!=null?d3.rb:d3.rk).toFixed(2)}%</td>`;
+    }
     const rowsB = data.filter(d=>d.bulan===b);
     if(!rowsB.every(d=>d.rkFilled)) return '<td>-</td>';
     const avgRb = rowsB.reduce((s,d)=>s+(d.rb!=null?d.rb:d.rk),0)/rowsB.length;

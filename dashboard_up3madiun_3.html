@@ -854,7 +854,11 @@ function kwhRender(rows){
   })).filter(d=>d.kode && d.periode);
   const hasUlp = ulpKey && data.some(d=>d.ulp);
 
-  const periods = [...new Set(data.map(d=>d.periode))].sort();
+  const periodsAll = [...new Set(data.map(d=>d.periode))].sort();
+  // Ambil hanya periode yang datanya benar-benar terisi (total > 0), supaya baris rumus
+  // yang sudah di-drag ke bulan mendatang (masih 0/kosong) tidak salah terpilih jadi acuan.
+  const periods = periodsAll.filter(p => data.filter(d=>d.periode===p).reduce((s,d)=>s+d.kwh,0) > 0);
+  if(!periods.length){ setStatus('kwh_status', false, 'Belum ada periode dengan data KWh_Jual terisi.'); return; }
   const last = periods[periods.length-1], prev = periods[periods.length-2];
   const totals = periods.map(p=>data.filter(d=>d.periode===p).reduce((s,d)=>s+d.kwh,0));
   const totalLast = totals[totals.length-1] || 0;

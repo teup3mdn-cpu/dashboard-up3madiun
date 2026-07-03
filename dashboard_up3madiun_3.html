@@ -958,7 +958,10 @@ function compRender(rows){
   const praKey = findKey(rows[0], ['prabayar']);
   if(!pKey||!palKey||!p2tlKey||!praKey){ setStatus('comp_status', false, 'Kolom Periode/PAL_Prognosa/Realisasi_P2TL/Prabayar tidak ditemukan.'); return; }
   const data = rows.map(r=>({periode:r[pKey], pal:num(r[palKey]), p2tl:num(r[p2tlKey]), prabayar:num(r[praKey])})).filter(d=>d.periode);
-  const last = data[data.length-1];
+  // Ambil baris terakhir yang datanya benar-benar terisi (bukan baris bulan mendatang yang masih 0/kosong).
+  const filled = data.filter(d => (d.pal + d.p2tl + d.prabayar) > 0);
+  if(!filled.length){ setStatus('comp_status', false, 'Belum ada periode dengan data komponen terisi.'); return; }
+  const last = filled[filled.length-1];
   const total = last.pal + last.p2tl + last.prabayar;
   document.getElementById('comp_kpi').innerHTML = `
     <div class="icon-kpi"><div class="circle navy">🏗</div><div><div class="ik-label">PAL (Prognosa) ${last.periode}</div><div class="ik-value">${(last.pal/1e6).toFixed(2)} <small>GWh</small></div></div></div>
@@ -1004,7 +1007,9 @@ function praRender(rows){
 }
 function praRecalcManual(){
   if(!praData.length) return;
-  const periods = [...new Set(praData.map(d=>d.periode))].sort();
+  const periodsAll = [...new Set(praData.map(d=>d.periode))].sort();
+  const periods = periodsAll.filter(p => praData.filter(d=>d.periode===p).reduce((s,d)=>s+d.gwh,0) > 0);
+  if(!periods.length) return;
   const last = periods[periods.length-1], prev = periods[periods.length-2];
   const totals = periods.map(p=>praData.filter(d=>d.periode===p).reduce((s,d)=>s+d.gwh,0));
   const totalLast = totals[totals.length-1] || 0;
@@ -1210,7 +1215,9 @@ function gmRender(rows){
 }
 function gmRecalc(){
   if(!gmData.length) return;
-  const last = gmData[gmData.length-1];
+  const filled = gmData.filter(d => (d.target + d.realisasi) > 0);
+  if(!filled.length) return;
+  const last = filled[filled.length-1];
   const capaian = last.target ? (last.realisasi/last.target*100) : 0;
   const amrTarget = num(document.getElementById('gm_amr_target').value);
   const amrReal = num(document.getElementById('gm_amr_real').value);

@@ -403,6 +403,11 @@
     <button class="secondary" onclick="p2tlSample()">Lihat contoh</button>
     <div class="hint">Format: <b>Bulan (Januari, Februari, ...), Target_kWh, Realisasi_kWh</b>. Sumber: spreadsheet MONITOR HARIAN dan sheet P2TL (AP2T).</div>
     <div class="status" id="p2tl_status"></div>
+    <input id="p2tl_ulp_url" type="text" placeholder="Link CSV kontribusi per ULP (kolom: ULP, Realisasi_kWh)" style="margin-top:8px;" />
+    <button onclick="p2tlUlpLoad()">Muat data ULP</button>
+    <button class="secondary" onclick="p2tlUlpSample()">Lihat contoh</button>
+    <div class="hint">Format: <b>ULP, Realisasi_kWh</b> — total realisasi P2TL per ULP untuk periode berjalan. Sumber: tabel REALISASI (BULANAN) per ULP di sheet P2TL (AP2T).</div>
+    <div class="status" id="p2tl_ulp_status"></div>
   </div>
   <div class="manual-box">
     <div class="title">Input manual (update sendiri tiap periode)</div>
@@ -436,9 +441,9 @@
             </div>
           </div>
           <div class="panel">
-            <div class="panel-head">Kontribusi realisasi per bulan (kWh)</div>
+            <div class="panel-head">Kontribusi realisasi per ULP (kWh)</div>
             <div class="panel-body" style="padding:0;display:flex;flex-direction:column;">
-              <table style="margin-bottom:6px;"><thead><tr><th>Bulan</th><th>Target</th><th>Realisasi</th><th>Capaian</th></tr></thead><tbody id="p2tl_table"></tbody></table>
+              <table style="margin-bottom:6px;"><thead><tr><th>ULP</th><th>Realisasi</th><th>Kontribusi</th></tr></thead><tbody id="p2tl_ulp_table"></tbody></table>
               <div class="chart-wrap" style="height:200px;padding:0 14px 10px;"><canvas id="p2tl_chart"></canvas></div>
             </div>
           </div>
@@ -1103,7 +1108,11 @@ function p2tlRecalc(){
   if(!p2tlData.length) return;
   let cumT=0, cumR=0;
   const rows = p2tlData.map(d=>{ cumT+=d.target; cumR+=d.realisasi; return {...d, cumT, cumR, capaian: cumT? (cumR/cumT*100):0}; });
-  const last = rows[rows.length-1];
+  // Pakai bulan terakhir yang SUDAH ADA realisasinya (bukan sekadar baris terakhir di tabel,
+  // karena bulan-bulan berikutnya yang belum berjalan biasanya realisasinya masih 0 tapi
+  // targetnya sudah terisi penuh setahun, sehingga akan membuat target kumulatif kegedean).
+  const rowsWithReal = rows.filter(r=>r.realisasi>0);
+  const last = rowsWithReal.length ? rowsWithReal[rowsWithReal.length-1] : rows[rows.length-1];
   const first = rows[0];
   const gap = last.cumT - last.cumR;
   const gapPct = last.cumT ? (gap/last.cumT*100) : 0;
@@ -1139,16 +1148,7 @@ function p2tlRecalc(){
     <div class="kpi-card ${bcr>=1?'green':'red'}"><div class="kpi-label">Benefit cost ratio (BCR)</div><div class="kpi-value">${bcr.toFixed(2)}</div><div class="kpi-sub">Setiap Rp1 biaya menghasilkan Rp${bcr.toFixed(2)} manfaat</div></div>
     <div class="kpi-card ${net>=0?'green':'red'}"><div class="kpi-label">Net benefit</div><div class="kpi-value">Rp${(net/1e6).toFixed(2)} Jt</div></div>`;
 
-  document.getElementById('p2tl_table').innerHTML = rows.map(d=>`<tr><td>${d.bulan}</td><td>${d.target.toLocaleString('id-ID')}</td><td>${d.realisasi.toLocaleString('id-ID')}</td><td><span class="pill ${d.capaian>=100?'good':'bad'}">${d.capaian.toFixed(2)}%</span></td></tr>`).join('');
-
-  destroyChart('p2tl_chart');
-  charts['p2tl_chart'] = new Chart(document.getElementById('p2tl_chart'), {
-    data:{ labels:rows.map(d=>d.bulan), datasets:[
-      {type:'bar', label:'Realisasi (kWh)', data:rows.map(d=>d.realisasi), backgroundColor:'#1f6fc6', borderRadius:4, maxBarThickness:30, yAxisID:'y'},
-      {type:'line', label:'Capaian %', data:rows.map(d=>d.capaian), borderColor:'#1c8a4a', backgroundColor:'#1c8a4a', yAxisID:'y1', tension:0.25}]},
-    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:true, position:'bottom', labels:{boxWidth:10, font:{size:11}}}},
-      scales:{ y:{beginAtZero:true}, y1:{beginAtZero:true, position:'right', max:100, grid:{drawOnChartArea:false}, ticks:{callback:v=>v+'%'}} } }
-  });
+  if(ulpContribData.length) p2tlUlpRecalc();
 
   destroyChart('p2tl_donut');
   charts['p2tl_donut'] = new Chart(document.getElementById('p2tl_donut'), {
@@ -1199,6 +1199,53 @@ function p2tlSample(){
     {Bulan:'MARET', Target_kWh:'892857', Realisasi_kWh:'1428322'},
     {Bulan:'APRIL', Target_kWh:'892857', Realisasi_kWh:'2201881'},
     {Bulan:'MEI', Target_kWh:'892857', Realisasi_kWh:'3387225'},
+  ]);
+}
+
+/* ---- kontribusi realisasi per ULP ---- */
+let ulpContribData = [];
+function p2tlUlpRender(rows){
+  const uKey = findKey(rows[0], ['ulp']);
+  const rKey = findKey(rows[0], ['realisasi']);
+  if(!uKey||!rKey){ setStatus('p2tl_ulp_status', false, 'Kolom ULP/Realisasi_kWh tidak ditemukan.'); return; }
+  ulpContribData = rows.map(r=>({ulp:r[uKey], realisasi:num(r[rKey])})).filter(d=>d.ulp);
+  p2tlUlpRecalc();
+  setStatus('p2tl_ulp_status', true, 'Data ULP berhasil dimuat.');
+}
+function p2tlUlpRecalc(){
+  if(!ulpContribData.length) return;
+  const total = ulpContribData.reduce((s,d)=>s+d.realisasi,0);
+  const sorted = [...ulpContribData].sort((a,b)=>b.realisasi-a.realisasi);
+
+  document.getElementById('p2tl_ulp_table').innerHTML = sorted.map(d=>{
+    const pct = total ? (d.realisasi/total*100) : 0;
+    return `<tr><td>${d.ulp}</td><td>${d.realisasi.toLocaleString('id-ID')}</td><td><span class="pill good">${pct.toFixed(2)}%</span></td></tr>`;
+  }).join('');
+
+  destroyChart('p2tl_chart');
+  charts['p2tl_chart'] = new Chart(document.getElementById('p2tl_chart'), {
+    type:'bar',
+    data:{ labels:sorted.map(d=>d.ulp), datasets:[
+      {label:'Realisasi (kWh)', data:sorted.map(d=>d.realisasi), backgroundColor:'#1f6fc6', borderRadius:4, maxBarThickness:30}]},
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+      scales:{ y:{beginAtZero:true} } }
+  });
+}
+async function p2tlUlpLoad(){
+  const url = document.getElementById('p2tl_ulp_url').value.trim();
+  if(!url){ setStatus('p2tl_ulp_status', false, 'Masukkan link CSV terlebih dahulu.'); return; }
+  setStatus('p2tl_ulp_status', true, 'Memuat data...');
+  try{ p2tlUlpRender(await fetchCSV(url)); } catch(e){ setStatus('p2tl_ulp_status', false, 'Gagal memuat: ' + e.message); }
+}
+function p2tlUlpSample(){
+  p2tlUlpRender([
+    {ULP:'MADIUN KOTA', Realisasi_kWh:'1801775'},
+    {ULP:'MAGETAN', Realisasi_kWh:'1789036'},
+    {ULP:'NGAWI', Realisasi_kWh:'1801775'},
+    {ULP:'MAOSPATI', Realisasi_kWh:'995017'},
+    {ULP:'CARUBAN', Realisasi_kWh:'1369521'},
+    {ULP:'DOLOPO', Realisasi_kWh:'1121282'},
+    {ULP:'MANTINGAN', Realisasi_kWh:'1121594'},
   ]);
 }
 

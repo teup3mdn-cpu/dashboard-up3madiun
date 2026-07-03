@@ -3,30 +3,39 @@
 <head>
 <meta charset="UTF-8">
 <title>Dashboard Kinerja UP3 Madiun</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
   :root{
-    --navy:#0d2a4a; --navy2:#123a63;
+    --navy:#0d2a4a; --navy2:#123a63; --navy-deep:#081c33;
     --green:#1c8a4a; --green-bg:#e6f5ec; --green-text:#0f6b38;
     --red:#d23b3b; --red-bg:#fdeaea; --red-text:#b32424;
     --blue:#1f6fc6; --blue-bg:#e9f1fb;
     --amber:#c98500; --amber-bg:#fdf2de;
     --purple:#5b4ab7; --purple-bg:#efedfb;
-    --gray-bg:#f4f6f8; --border:#e1e4e8; --text:#1c2733; --muted:#5b6675;
+    --gold:#ffcc00; --gold-deep:#e0ac00;
+    --gray-bg:#f3f5f8; --border:#e4e8ed; --text:#1c2733; --muted:#657081;
+    --shadow-sm:0 1px 2px rgba(13,42,74,.06), 0 1px 1px rgba(13,42,74,.04);
+    --shadow-md:0 4px 16px rgba(13,42,74,.08), 0 1px 3px rgba(13,42,74,.06);
+    --shadow-lg:0 10px 30px rgba(13,42,74,.12);
   }
   *{box-sizing:border-box;}
-  body{font-family:'Segoe UI',Arial,sans-serif;background:var(--gray-bg);margin:0;padding:20px;color:var(--text);}
-  h1{font-size:18px;margin:0 0 14px;color:var(--navy);}
+  body{font-family:'Inter',-apple-system,'Segoe UI',Arial,sans-serif;background:var(--gray-bg);margin:0;padding:24px;color:var(--text);-webkit-font-smoothing:antialiased;}
+  h1{font-family:'Manrope',sans-serif;font-size:19px;font-weight:800;margin:0 0 4px;color:var(--navy);letter-spacing:.1px;}
+  .app-sub{font-size:12.5px;color:var(--muted);margin:0 0 18px;font-weight:500;}
 
-  .tabs{display:flex;gap:4px;flex-wrap:wrap;border-bottom:2px solid var(--navy);margin-bottom:18px;}
-  .tab-btn{padding:9px 14px;border:none;background:#e7ebee;color:var(--navy2);font-size:12.5px;font-weight:600;border-radius:6px 6px 0 0;cursor:pointer;}
+  .tabs{display:flex;gap:4px;flex-wrap:wrap;border-bottom:2px solid var(--navy);margin-bottom:20px;}
+  .tab-btn{padding:10px 16px;border:none;background:#e7ebee;color:var(--navy2);font-size:12.5px;font-weight:700;border-radius:8px 8px 0 0;cursor:pointer;font-family:'Inter',sans-serif;transition:background .15s;}
+  .tab-btn:hover{background:#dbe2e8;}
   .tab-btn.active{background:var(--navy);color:#fff;}
   .tab-panel{display:none;}
   .tab-panel.active{display:block;}
 
-  .config{background:#fff;border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:18px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
-  .config input{flex:1;min-width:260px;padding:9px 12px;border:1px solid var(--border);border-radius:6px;font-size:13px;}
-  .config button{padding:9px 14px;border:none;border-radius:6px;background:var(--blue);color:#fff;font-size:12.5px;font-weight:600;cursor:pointer;}
+  .config{background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:18px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;box-shadow:var(--shadow-sm);}
+  .config input{flex:1;min-width:260px;padding:9px 12px;border:1px solid var(--border);border-radius:7px;font-size:13px;font-family:'Inter',sans-serif;}
+  .config button{padding:9px 14px;border:none;border-radius:7px;background:var(--blue);color:#fff;font-size:12.5px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;}
   .config button.secondary{background:#fff;color:var(--navy2);border:1px solid var(--border);}
   .config button:hover{filter:brightness(0.95);}
   .config .hint{font-size:12px;color:var(--muted);width:100%;}
@@ -41,33 +50,67 @@
   .manual-grid input{width:100%;padding:7px 9px;border:1px solid var(--border);border-radius:6px;font-size:13px;}
 
   .kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-bottom:18px;}
-  .kpi-card{background:#fff;border-radius:10px;padding:14px 16px;border-left:5px solid var(--blue);box-shadow:0 1px 2px rgba(0,0,0,.04);}
+  .kpi-card{background:#fff;border-radius:12px;padding:15px 17px;border-left:4px solid var(--blue);box-shadow:var(--shadow-sm);transition:box-shadow .15s,transform .15s;}
+  .kpi-card:hover{box-shadow:var(--shadow-md);transform:translateY(-1px);}
   .kpi-card.green{border-left-color:var(--green);}
   .kpi-card.red{border-left-color:var(--red);}
   .kpi-card.amber{border-left-color:var(--amber);}
   .kpi-card.purple{border-left-color:var(--purple);}
-  .kpi-label{font-size:11px;font-weight:700;color:var(--navy);letter-spacing:.3px;text-transform:uppercase;margin-bottom:6px;}
-  .kpi-value{font-size:26px;font-weight:700;color:var(--blue);}
+  .kpi-label{font-size:10.5px;font-weight:800;color:var(--navy);letter-spacing:.4px;text-transform:uppercase;margin-bottom:7px;}
+  .kpi-value{font-family:'Manrope',sans-serif;font-size:27px;font-weight:800;color:var(--blue);letter-spacing:-.2px;}
   .kpi-card.green .kpi-value{color:var(--green-text);}
   .kpi-card.red .kpi-value{color:var(--red-text);}
   .kpi-card.amber .kpi-value{color:var(--amber);}
   .kpi-card.purple .kpi-value{color:var(--purple);}
-  .kpi-sub{font-size:11.5px;color:var(--muted);margin-top:2px;}
+  .kpi-sub{font-size:11.5px;color:var(--muted);margin-top:3px;font-weight:500;}
 
   .panels{display:grid;grid-template-columns:1.3fr 1fr;gap:14px;}
   @media (max-width:900px){.panels{grid-template-columns:1fr;}}
-  .panel{background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.04);}
-  .panel-head{background:var(--navy);color:#fff;font-size:12.5px;font-weight:700;padding:9px 14px;letter-spacing:.3px;}
-  .panel-body{padding:14px;}
+  .panel{background:#fff;border-radius:12px;overflow:hidden;box-shadow:var(--shadow-sm);}
+  .panel-head{background:var(--navy);color:#fff;font-size:12.5px;font-weight:700;padding:11px 16px;letter-spacing:.3px;font-family:'Inter',sans-serif;}
+  .panel-body{padding:16px;}
   .chart-wrap{position:relative;height:300px;}
 
   table{width:100%;border-collapse:collapse;font-size:12.5px;}
-  th,td{padding:6px 8px;text-align:left;border-bottom:1px solid var(--border);}
-  th{color:var(--muted);font-weight:600;font-size:11.5px;}
+  th,td{padding:7px 8px;text-align:left;border-bottom:1px solid var(--border);}
+  th{color:var(--muted);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.3px;}
   .pill{display:inline-block;padding:2px 8px;border-radius:12px;font-weight:700;font-size:11.5px;}
   .pill.good{background:var(--green-bg);color:var(--green-text);}
   .pill.bad{background:var(--red-bg);color:var(--red-text);}
   .empty{color:var(--muted);font-size:13px;padding:26px;text-align:center;}
+
+  /* ---- Executive summary (director-level narrative) ---- */
+  .exec-summary{background:linear-gradient(135deg,var(--navy-deep) 0%,var(--navy) 55%,var(--navy2) 100%);border-radius:14px;padding:22px 26px;margin-bottom:18px;color:#fff;box-shadow:var(--shadow-lg);position:relative;overflow:hidden;}
+  .exec-summary::before{content:'';position:absolute;top:-60px;right:-60px;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,rgba(255,204,0,.16),transparent 70%);}
+  .exec-summary .eyebrow{font-size:10.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--gold);margin-bottom:8px;}
+  .exec-summary .headline{font-family:'Manrope',sans-serif;font-size:19px;font-weight:800;line-height:1.4;margin:0 0 14px;max-width:900px;position:relative;}
+  .exec-summary .headline b{color:var(--gold);}
+  .exec-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;position:relative;}
+  .exec-point{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:11px 13px;font-size:12px;line-height:1.5;color:#dce6f2;backdrop-filter:blur(2px);}
+  .exec-point .tag{display:inline-block;font-size:9.5px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;padding:2px 7px;border-radius:5px;margin-bottom:6px;}
+  .exec-point .tag.pos{background:rgba(28,138,74,.35);color:#a9e8c3;}
+  .exec-point .tag.neg{background:rgba(210,59,59,.35);color:#f6b3b3;}
+  .exec-point .tag.info{background:rgba(31,111,198,.35);color:#bcd6f5;}
+  .exec-point b{color:#fff;}
+
+  /* ---- Ranking panel ---- */
+  .rank-list{display:flex;flex-direction:column;gap:8px;}
+  .rank-item{display:grid;grid-template-columns:30px 130px 1fr 90px;align-items:center;gap:12px;padding:9px 6px;border-radius:8px;}
+  .rank-item:hover{background:var(--gray-bg);}
+  @media (max-width:700px){.rank-item{grid-template-columns:26px 100px 1fr 70px;gap:8px;}}
+  .rank-num{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:11.5px;color:#fff;background:var(--navy2);}
+  .rank-num.top{background:linear-gradient(135deg,var(--gold),var(--gold-deep));color:var(--navy-deep);}
+  .rank-num.bottom{background:var(--red);}
+  .rank-name{font-size:12.5px;font-weight:700;color:var(--navy);}
+  .rank-name small{display:block;font-size:10.5px;color:var(--muted);font-weight:500;}
+  .rank-bar-track{height:9px;background:var(--gray-bg);border-radius:5px;overflow:hidden;position:relative;}
+  .rank-bar-fill{height:100%;border-radius:5px;transition:width .4s ease;}
+  .rank-bar-fill.good{background:linear-gradient(90deg,#1c8a4a,#2fb567);}
+  .rank-bar-fill.bad{background:linear-gradient(90deg,#d23b3b,#e8685f);}
+  .rank-marker{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--navy);opacity:.55;}
+  .rank-gap{text-align:right;font-weight:800;font-size:12.5px;}
+  .rank-gap.good{color:var(--green-text);}
+  .rank-gap.bad{color:var(--red-text);}
 
   /* ---- executive infographic style ---- */
   .exec-banner{display:flex;align-items:center;gap:18px;background:linear-gradient(135deg,#0a3d6b,#0d2a4a 70%);border-radius:12px;padding:18px 24px;margin-bottom:16px;color:#fff;}
@@ -103,8 +146,8 @@
   .fin-box{background:var(--gray-bg);border-radius:8px;padding:12px;text-align:center;font-size:12px;color:var(--muted);}
   .fin-box .big{font-size:20px;font-weight:800;color:var(--navy);margin:4px 0;}
 
-  .susut-title{font-size:22px;font-weight:800;color:#1c2733;margin-bottom:12px;}
-  .ulp-card{border-radius:8px;padding:10px;border:2px solid var(--green);background:var(--green-bg);}
+  .susut-title{font-family:'Manrope',sans-serif;font-size:23px;font-weight:800;color:#1c2733;margin-bottom:14px;letter-spacing:-.2px;}
+  .ulp-card{border-radius:10px;padding:11px;border:1.5px solid var(--green);background:var(--green-bg);box-shadow:var(--shadow-sm);}
   .ulp-card.bad{border-color:var(--red);background:var(--red-bg);}
   .ulp-card .name{font-size:11px;font-weight:800;color:var(--navy);margin-bottom:5px;}
   .ulp-card .row{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);}
@@ -124,13 +167,14 @@
 
   /* ---- icon KPI row (prabayar / kwh jual style) ---- */
   .icon-kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:18px;}
-  .icon-kpi{background:#fff;border-radius:10px;padding:14px;display:flex;align-items:center;gap:10px;box-shadow:0 1px 2px rgba(0,0,0,.04);}
+  .icon-kpi{background:#fff;border-radius:12px;padding:15px;display:flex;align-items:center;gap:11px;box-shadow:var(--shadow-sm);transition:box-shadow .15s;}
+  .icon-kpi:hover{box-shadow:var(--shadow-md);}
   .icon-kpi .circle{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff;flex-shrink:0;}
   .icon-kpi .circle.navy{background:#0d2a4a;} .icon-kpi .circle.teal{background:#1aa6a0;}
   .icon-kpi .circle.green{background:#1c8a4a;} .icon-kpi .circle.amber{background:#e0a100;}
   .icon-kpi .circle.purple{background:#7a4ec9;}
   .icon-kpi .ik-label{font-size:10.5px;color:var(--muted);font-weight:700;text-transform:uppercase;}
-  .icon-kpi .ik-value{font-size:19px;font-weight:800;color:var(--navy);}
+  .icon-kpi .ik-value{font-family:'Manrope',sans-serif;font-size:19px;font-weight:800;color:var(--navy);}
   .icon-kpi .ik-value small{font-size:11px;font-weight:600;color:var(--muted);}
 
   .podium-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;background:var(--gray-bg);margin-bottom:8px;}
@@ -139,20 +183,21 @@
   .podium-name{flex:1;font-size:12.5px;font-weight:700;color:var(--navy);}
   .podium-val{font-weight:800;font-size:13px;color:var(--green-text);}
 
-  .key-insight-banner{display:flex;align-items:stretch;background:#fff;border-radius:10px;overflow:hidden;margin-top:14px;box-shadow:0 1px 2px rgba(0,0,0,.04);}
+  .key-insight-banner{display:flex;align-items:stretch;background:#fff;border-radius:12px;overflow:hidden;margin-top:14px;box-shadow:var(--shadow-sm);}
   .ki-tab{background:#0d3a5c;color:#fff;font-weight:800;font-size:15px;padding:18px 20px;display:flex;align-items:center;justify-content:center;text-align:center;flex-shrink:0;width:110px;}
   .ki-points{flex:1;display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;padding:14px 18px;}
   .ki-point{font-size:11.5px;color:var(--text);line-height:1.45;}
   .ki-point b{color:var(--navy);}
 
-  .header-banner-light{background:#fff;border-radius:10px;padding:16px 20px;margin-bottom:16px;}
-  .header-banner-light h2{margin:0;font-size:21px;font-weight:800;color:#0d2a4a;}
+  .header-banner-light{background:#fff;border-radius:12px;padding:16px 20px;margin-bottom:16px;box-shadow:var(--shadow-sm);}
+  .header-banner-light h2{margin:0;font-family:'Manrope',sans-serif;font-size:21px;font-weight:800;color:#0d2a4a;}
   .header-banner-light .sub{font-size:13px;color:var(--blue);font-weight:600;margin-top:3px;}
 </style>
 </head>
 <body>
 
 <h1>Dashboard kinerja UP3 Madiun</h1>
+<p class="app-sub">Ringkasan kinerja operasional untuk pengambilan keputusan — susut, penjualan, P2TL, dan prognosa</p>
 
 <div class="tabs">
   <button class="tab-btn active" data-tab="susut">Susut per ULP</button>
@@ -162,6 +207,7 @@
   <button class="tab-btn" data-tab="gantimeter">Ganti meter & amrisasi</button>
   <button class="tab-btn" data-tab="prognosa">Prognosa susut</button>
 </div>
+
 
 <!-- ================= TAB 1: SUSUT PER ULP ================= -->
 <div class="tab-panel active" id="tab-susut">
@@ -173,29 +219,68 @@
     <div class="status" id="susut_status"></div>
   </div>
   <div id="susut_dash" style="display:none;">
-    <div class="susut-title">KINERJA SUSUT</div>
-    <div class="kpi-row" id="susut_kpi"></div>
-    <div class="panels">
-      <div class="panel">
-        <div class="panel-head" id="susut_bar_head">Target vs realisasi kumulatif per ULP</div>
-        <div class="panel-body"><div class="chart-wrap"><canvas id="susut_chart"></canvas></div></div>
-      </div>
-      <div class="panel">
-        <div class="panel-head">Kinerja susut kumulatif per ULP</div>
-        <div class="panel-body" id="susut_cards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;"></div>
+    <div class="exec-banner">
+      <div class="exec-banner-logo">⚡<span>PLN<br><small>UP3 MADIUN</small></span></div>
+      <div class="exec-banner-title">
+        <h2>KINERJA SUSUT UP3 MADIUN</h2>
+        <div class="exec-banner-period" id="susut_period">SD MEI 2026</div>
       </div>
     </div>
-    <div class="panels" style="margin-top:14px;">
-      <div class="panel">
-        <div class="panel-head">Tren susut bulanan UP3 Madiun</div>
-        <div class="panel-body"><div class="chart-wrap"><canvas id="susut_trend"></canvas></div>
-          <div class="donut-caption" id="susut_trend_caption"></div>
-        </div>
+
+    <div class="exec-summary" id="susut_exec_summary" style="display:none;">
+      <div class="eyebrow">Ringkasan eksekutif</div>
+      <div class="headline" id="susut_headline"></div>
+      <div class="exec-grid" id="susut_exec_grid"></div>
+    </div>
+
+    <div class="exec-layout">
+      <div class="exec-side">
+        <div class="exec-side-title">RINGKASAN UTAMA</div>
+        <div id="susut_side"></div>
       </div>
-      <div class="panel">
-        <div class="panel-head">Matriks target & realisasi bulanan per ULP</div>
-        <div class="panel-body" style="padding:0;overflow-x:auto;">
-          <table id="susut_matrix" style="font-size:11.5px;"></table>
+      <div class="exec-main">
+        <div class="kpi-row" id="susut_kpi"></div>
+        <div class="panels">
+          <div class="panel">
+            <div class="panel-head" id="susut_bar_head">Target vs realisasi kumulatif per ULP</div>
+            <div class="panel-body"><div class="chart-wrap"><canvas id="susut_chart"></canvas></div></div>
+          </div>
+          <div class="panel">
+            <div class="panel-head">Ranking kinerja susut per ULP</div>
+            <div class="panel-body"><div class="rank-list" id="susut_rank"></div></div>
+          </div>
+        </div>
+        <div class="panels" style="margin-top:14px;">
+          <div class="panel">
+            <div class="panel-head">Tren susut bulanan UP3 Madiun</div>
+            <div class="panel-body"><div class="chart-wrap"><canvas id="susut_trend"></canvas></div>
+              <div class="donut-caption" id="susut_trend_caption"></div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-head">Detail per ULP (kartu)</div>
+            <div class="panel-body" id="susut_cards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;"></div>
+          </div>
+        </div>
+        <div class="panel" style="margin-top:14px;">
+          <div class="panel-head">Matriks target &amp; realisasi bulanan per ULP</div>
+          <div class="panel-body" style="padding:0;overflow-x:auto;">
+            <table id="susut_matrix" style="font-size:11.5px;"></table>
+          </div>
+        </div>
+        <div class="exec-footer">
+          <div class="exec-foot-card green">
+            <div class="exec-foot-head">✓ Insight utama</div>
+            <ul id="susut_insight"></ul>
+          </div>
+          <div class="exec-foot-card red">
+            <div class="exec-foot-head">⚠ Perlu perhatian</div>
+            <ul id="susut_monitor"></ul>
+          </div>
+          <div class="exec-foot-card blue">
+            <div class="exec-foot-head">→ Rekomendasi tindak lanjut</div>
+            <ul id="susut_reco"></ul>
+          </div>
         </div>
       </div>
     </div>
@@ -206,10 +291,10 @@
 <!-- ================= TAB 2: EVALUASI KWH JUAL ================= -->
 <div class="tab-panel" id="tab-kwhjual">
   <div class="config">
-    <input id="kwh_url" type="text" placeholder="Link CSV (kolom: Unit, Periode (YYYY-MM), KWh_Jual)" />
+    <input id="kwh_url" type="text" placeholder="Link CSV (kolom: ULP, Kode, Periode (YYYY-MM), KWh_Jual, Unit)" />
     <button onclick="kwhLoad()">Muat data</button>
     <button class="secondary" onclick="kwhSample()">Lihat contoh</button>
-    <div class="hint">Format long: <b>Unit, Periode (YYYY-MM), KWh_Jual</b> per baris per unit per bulan. Sumber: gabungan sheet PER KODE PROSES, TARIF, TARIF DAYA TM &mdash; rekap dulu ke format ini di sheet/tab khusus dashboard.</div>
+    <div class="hint">Format long: <b>ULP, Kode, Periode (YYYY-MM), KWh_Jual</b> — satu baris per ULP per kode proses billing per bulan. "Kode" adalah kode proses pembacaan pascabayar (51MDNAI, 51MDNAR, dst), <b>bukan</b> nama unit/ULP. Sumber: sheet PER KODE PROSES.</div>
     <div class="status" id="kwh_status"></div>
   </div>
   <div id="kwh_dash" style="display:none;">
@@ -228,9 +313,9 @@
         <div class="panel-body" id="kwh_podium"></div>
       </div>
       <div class="panel">
-        <div class="panel-head">Rincian per unit</div>
+        <div class="panel-head">Rincian kode proses billing per ULP</div>
         <div class="panel-body" style="padding:0;">
-          <table><thead><tr><th>Unit</th><th id="kwh_th_prev">Bln -1</th><th id="kwh_th_last">Bln terakhir</th><th>Growth</th></tr></thead><tbody id="kwh_table"></tbody></table>
+          <table><thead><tr><th>ULP</th><th>Kode proses</th><th id="kwh_th_prev">Bln -1</th><th id="kwh_th_last">Bln terakhir</th><th>Growth</th></tr></thead><tbody id="kwh_table"></tbody></table>
         </div>
       </div>
     </div>
@@ -570,6 +655,36 @@ function susutRender(rows){
   const avgR = up3Row ? up3Row.rk : lastData.reduce((s,d)=>s+d.rk,0)/lastData.length;
   const pencapaian = avgR ? (avgT/avgR)*100 : 0;
   const diAtas = lastData.filter(d=>d.rk>d.tk);
+  const diBawah = lastData.filter(d=>d.rk<=d.tk);
+
+  // ranking ULP dari yang terbaik (gap paling negatif / paling di bawah target) ke terburuk
+  const ranked = [...lastData].sort((a,b)=>(a.rk-a.tk)-(b.rk-b.tk));
+  const best = ranked[0], worst = ranked[ranked.length-1];
+  const maxScale = Math.max(...lastData.map(d=>Math.max(d.tk,d.rk))) * 1.15;
+
+  // tren bulan terakhir vs bulan sebelumnya (level UP3) untuk narasi
+  const up3Sorted = up3Data.filter(d=>d.rkFilled).sort((a,b)=>filledBulans.indexOf(a.bulan)-filledBulans.indexOf(b.bulan));
+  const up3Last = up3Sorted[up3Sorted.length-1], up3Prev = up3Sorted[up3Sorted.length-2];
+  const trendDiff = (up3Last && up3Prev) ? (up3Last.rk!=null?up3Last.rk:0) - (up3Prev.rk!=null?up3Prev.rk:0) : null;
+
+  document.getElementById('susut_period').textContent = `SD ${lastBulan} 2026`;
+
+  document.getElementById('susut_exec_summary').style.display = 'block';
+  document.getElementById('susut_headline').innerHTML = `Susut UP3 Madiun s.d <b>${lastBulan} 2026</b> tercatat <b>${avgR.toFixed(2)}%</b> dari target kumulatif <b>${avgT.toFixed(2)}%</b> — ${pencapaian>=100?`<b>memenuhi target</b> (pencapaian ${pencapaian.toFixed(2)}%)`:`<b>belum memenuhi target</b> (pencapaian ${pencapaian.toFixed(2)}%)`}. ${diAtas.length>0?`Sebanyak <b>${diAtas.length} dari ${ulps.length} ULP</b> masih di atas target dan perlu perhatian.`:`Seluruh <b>${ulps.length} ULP</b> sudah berada di bawah/sesuai target.`}`;
+  document.getElementById('susut_exec_grid').innerHTML = `
+    <div class="exec-point"><span class="tag pos">Terbaik</span><br><b>${best.ulp}</b> — realisasi ${best.rk.toFixed(2)}% (gap ${(best.rk-best.tk).toFixed(2)} vs target)</div>
+    <div class="exec-point"><span class="tag ${diAtas.length>0?'neg':'pos'}">${diAtas.length>0?'Perlu perhatian':'Aman'}</span><br><b>${worst.ulp}</b> — realisasi ${worst.rk.toFixed(2)}% (gap +${(worst.rk-worst.tk).toFixed(2)} vs target)</div>
+    <div class="exec-point"><span class="tag info">Tren bulanan</span><br>${trendDiff!=null?`${trendDiff<=0?'Membaik':'Memburuk'} ${Math.abs(trendDiff).toFixed(2)} poin vs ${up3Prev.bulan}`:'Data tren belum cukup'}</div>`;
+
+  document.getElementById('susut_side').innerHTML = `
+    <div class="exec-side-item"><div class="lbl">Jumlah ULP</div><div class="val">${ulps.length} ULP</div></div>
+    <div class="exec-side-item"><div class="lbl">Target kumulatif</div><div class="val">${avgT.toFixed(2)}%</div></div>
+    <div class="exec-side-item"><div class="lbl">Realisasi kumulatif</div><div class="val">${avgR.toFixed(2)}%</div></div>
+    <div class="exec-side-item"><div class="lbl">Pencapaian target</div><div class="val">${pencapaian.toFixed(2)}%</div></div>
+    <div class="exec-side-item"><div class="lbl">ULP di atas target</div><div class="val">${diAtas.length} ULP</div></div>
+    <div class="exec-side-item"><div class="lbl">ULP di bawah target</div><div class="val">${diBawah.length} ULP</div></div>
+    <div class="exec-side-item"><div class="lbl">ULP performa terbaik</div><div class="val" style="font-size:13px;">${best.ulp}</div></div>
+    <div class="exec-side-item"><div class="lbl">ULP perlu perhatian</div><div class="val" style="font-size:13px;">${worst.ulp}</div></div>`;
 
   document.getElementById('susut_kpi').innerHTML = `
     <div class="kpi-card green"><div class="kpi-label">Pencapaian target kumulatif</div><div class="kpi-value">${pencapaian.toFixed(2)}%</div><div class="kpi-sub">${pencapaian>=100?'Memenuhi target':'Belum memenuhi target'}</div></div>
@@ -585,6 +700,19 @@ function susutRender(rows){
       {label:'Realisasi kumulatif', data:lastData.map(d=>d.rk), backgroundColor:'#1c8a4a', borderRadius:4, maxBarThickness:22}]},
     options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom', labels:{boxWidth:10, font:{size:11}}}}, scales:{y:{beginAtZero:true, ticks:{callback:v=>v+'%'}}} }
   });
+
+  document.getElementById('susut_rank').innerHTML = ranked.map((d,i)=>{
+    const gap = d.rk-d.tk, good = gap<=0;
+    const rankClass = i===0?'top':(i===ranked.length-1 && gap>0?'bottom':'');
+    const fillPct = Math.min(100,(d.rk/maxScale)*100);
+    const markerPct = Math.min(100,(d.tk/maxScale)*100);
+    return `<div class="rank-item">
+      <div class="rank-num ${rankClass}">${i+1}</div>
+      <div class="rank-name">${d.ulp}<small>Target ${d.tk.toFixed(2)}%</small></div>
+      <div class="rank-bar-track"><div class="rank-bar-fill ${good?'good':'bad'}" style="width:${fillPct}%;"></div><div class="rank-marker" style="left:${markerPct}%;"></div></div>
+      <div class="rank-gap ${good?'good':'bad'}">${gap>=0?'+':''}${gap.toFixed(2)}</div>
+    </div>`;
+  }).join('');
 
   document.getElementById('susut_cards').innerHTML = lastData.map(d=>{
     const gap = d.rk - d.tk, good = gap<=0;
@@ -651,6 +779,22 @@ function susutRender(rows){
   tbody += '</tbody>';
   document.getElementById('susut_matrix').innerHTML = thead + tbody;
 
+  document.getElementById('susut_insight').innerHTML = `
+    <li><b>${best.ulp}</b> jadi ULP dengan kinerja terbaik, realisasi ${best.rk.toFixed(2)}% vs target ${best.tk.toFixed(2)}% (${(best.tk-best.rk).toFixed(2)} poin di bawah target).</li>
+    <li>${diBawah.length} dari ${ulps.length} ULP sudah berada di bawah/sesuai target kumulatif s.d ${lastBulan}.</li>
+    ${trendDiff!=null && trendDiff<=0 ? `<li>Tren susut UP3 membaik ${Math.abs(trendDiff).toFixed(2)} poin dibanding bulan ${up3Prev.bulan}.</li>` : ''}`;
+
+  document.getElementById('susut_monitor').innerHTML = diAtas.length ? diAtas.map(d=>
+    `<li><b>${d.ulp}</b> di atas target ${(d.rk-d.tk).toFixed(2)} poin (realisasi ${d.rk.toFixed(2)}% vs target ${d.tk.toFixed(2)}%).</li>`
+  ).join('') : `<li>Tidak ada ULP yang berada di atas target bulan ini.</li>`;
+
+  document.getElementById('susut_reco').innerHTML = diAtas.length ? `
+    <li>Prioritaskan investigasi susut non-teknis di <b>${worst.ulp}</b> (gap terbesar, +${(worst.rk-worst.tk).toFixed(2)} poin).</li>
+    <li>Evaluasi P2TL &amp; akurasi meter di ULP yang di atas target sebelum akhir triwulan.</li>
+    <li>Replikasi praktik baik dari <b>${best.ulp}</b> ke ULP dengan gap terbesar.</li>` : `
+    <li>Pertahankan momentum — seluruh ULP sudah sesuai/di bawah target.</li>
+    <li>Lanjutkan monitoring bulanan agar tren tetap terjaga.</li>`;
+
   showDash('susut');
   setStatus('susut_status', true, 'Data berhasil dimuat (' + ulps.length + ' ULP, ' + bulans.length + ' bulan).');
 }
@@ -695,11 +839,21 @@ function susutSample(){
 
 /* ================= TAB 2: KWH JUAL ================= */
 function kwhRender(rows){
+  const ulpKey = findKey(rows[0], ['ulp']);
+  const kodeKey = findKey(rows[0], ['kode','proses']);
   const uKey = findKey(rows[0], ['unit']);
   const pKey = findKey(rows[0], ['periode','bulan']);
   const vKey = findKey(rows[0], ['kwh','jual','nilai']);
-  if(!uKey||!pKey||!vKey){ setStatus('kwh_status', false, 'Kolom Unit/Periode/KWh tidak ditemukan.'); return; }
-  const data = rows.map(r=>({unit:r[uKey], periode:r[pKey], kwh:num(r[vKey])})).filter(d=>d.unit&&d.periode);
+  if((!ulpKey && !uKey)||!pKey||!vKey){ setStatus('kwh_status', false, 'Kolom ULP/Kode/Periode/KWh tidak ditemukan.'); return; }
+  // Kompatibel 2 format: (a) ULP + Kode terpisah (format baru, dianjurkan), atau
+  // (b) kolom Unit gabungan lama (fallback, kode proses saja tanpa pengelompokan ULP).
+  const data = rows.map(r=>({
+    ulp: ulpKey ? String(r[ulpKey]||'').trim() : '',
+    kode: kodeKey ? String(r[kodeKey]||'').trim() : String(r[uKey]||'').trim(),
+    periode: r[pKey], kwh: num(r[vKey])
+  })).filter(d=>d.kode && d.periode);
+  const hasUlp = ulpKey && data.some(d=>d.ulp);
+
   const periods = [...new Set(data.map(d=>d.periode))].sort();
   const last = periods[periods.length-1], prev = periods[periods.length-2];
   const totals = periods.map(p=>data.filter(d=>d.periode===p).reduce((s,d)=>s+d.kwh,0));
@@ -707,7 +861,8 @@ function kwhRender(rows){
   const totalPrev = totals[totals.length-2] || 0;
   const growthAbs = totalLast-totalPrev;
   const growth = totalPrev ? (growthAbs/totalPrev*100) : 0;
-  const units = [...new Set(data.map(d=>d.unit))];
+  const ulps = hasUlp ? [...new Set(data.map(d=>d.ulp))] : [];
+  const kodeUnits = [...new Set(data.map(d=>d.kode + (hasUlp?'|'+d.ulp:'')))];
   const avgHarian = totalLast/30;
 
   document.getElementById('kwh_title').textContent = `EVALUASI KWH JUAL UP3 MADIUN — ${last||''}`;
@@ -718,23 +873,42 @@ function kwhRender(rows){
     <div class="icon-kpi"><div class="circle teal">📅</div><div><div class="ik-label">${prev||'Bulan lalu'}</div><div class="ik-value">${(totalPrev/1e6).toFixed(2)} <small>GWh</small></div></div></div>
     <div class="icon-kpi"><div class="circle ${growth>=0?'green':'amber'}">${growth>=0?'⬆':'⬇'}</div><div><div class="ik-label">Growth</div><div class="ik-value">${growth>=0?'+':''}${growth.toFixed(1)}% <small>(${growthAbs>=0?'+':''}${(growthAbs/1e6).toFixed(2)} GWh)</small></div></div></div>
     <div class="icon-kpi"><div class="circle amber">⏱</div><div><div class="ik-label">Rata-rata harian</div><div class="ik-value">${(avgHarian/1e6).toFixed(2)} <small>GWh/hari</small></div></div></div>
-    <div class="icon-kpi"><div class="circle purple">🏢</div><div><div class="ik-label">Jumlah unit</div><div class="ik-value">${units.length} <small>unit</small></div></div></div>`;
+    <div class="icon-kpi"><div class="circle purple">🏢</div><div><div class="ik-label">${hasUlp?'Jumlah ULP':'Jumlah kode proses'}</div><div class="ik-value">${(hasUlp?ulps.length:kodeUnits.length)} <small>${hasUlp?'ULP':'kode'}</small></div></div></div>`;
 
   document.getElementById('kwh_th_prev').textContent = prev || 'Bln -1';
   document.getElementById('kwh_th_last').textContent = last || 'Bln terakhir';
-  const perUnit = units.map(u=>{
-    const vPrev = data.find(d=>d.unit===u && d.periode===prev)?.kwh || 0;
-    const vLast = data.find(d=>d.unit===u && d.periode===last)?.kwh || 0;
-    return {unit:u, vPrev, vLast, diff: vLast-vPrev};
+
+  // rincian per kombinasi ULP+Kode
+  const perItem = kodeUnits.map(key=>{
+    const [kode, ulp] = hasUlp ? key.split('|') : [key, ''];
+    const rowsK = data.filter(d=>d.kode===kode && (!hasUlp || d.ulp===ulp));
+    const vPrev = rowsK.find(d=>d.periode===prev)?.kwh || 0;
+    const vLast = rowsK.find(d=>d.periode===last)?.kwh || 0;
+    return {ulp, kode, vPrev, vLast, diff: vLast-vPrev};
   });
-  document.getElementById('kwh_table').innerHTML = perUnit.map(d=>{
+
+  // tabel dikelompokkan per ULP (kalau ada), urut ULP lalu kode
+  const sorted = hasUlp ? [...perItem].sort((a,b)=> a.ulp.localeCompare(b.ulp) || a.kode.localeCompare(b.kode)) : perItem;
+  let lastUlpSeen = null;
+  document.getElementById('kwh_table').innerHTML = sorted.map(d=>{
     const g = d.vPrev ? (d.diff/d.vPrev*100) : 0;
-    return `<tr><td>${d.unit}</td><td>${d.vPrev.toLocaleString('id-ID')}</td><td>${d.vLast.toLocaleString('id-ID')}</td><td><span class="pill ${g>=0?'good':'bad'}">${g>=0?'+':''}${g.toFixed(2)}%</span></td></tr>`;
+    const showUlp = hasUlp && d.ulp !== lastUlpSeen;
+    lastUlpSeen = d.ulp;
+    return `<tr><td style="font-weight:${showUlp?800:400};color:${showUlp?'var(--navy)':'var(--muted)'};">${showUlp?d.ulp:''}</td><td>${d.kode}</td><td>${d.vPrev.toLocaleString('id-ID')}</td><td>${d.vLast.toLocaleString('id-ID')}</td><td><span class="pill ${g>=0?'good':'bad'}">${g>=0?'+':''}${g.toFixed(2)}%</span></td></tr>`;
   }).join('');
 
-  const top3 = [...perUnit].sort((a,b)=>b.diff-a.diff).slice(0,3);
+  // top kontributor: kalau ada ULP, agregasi per ULP; kalau tidak, per kode
+  const contribGroup = hasUlp
+    ? ulps.map(u=>{
+        const rowsU = data.filter(d=>d.ulp===u);
+        const vP = rowsU.filter(d=>d.periode===prev).reduce((s,d)=>s+d.kwh,0);
+        const vL = rowsU.filter(d=>d.periode===last).reduce((s,d)=>s+d.kwh,0);
+        return {label:u, diff:vL-vP};
+      })
+    : perItem.map(d=>({label:d.kode, diff:d.diff}));
+  const top3 = [...contribGroup].sort((a,b)=>b.diff-a.diff).slice(0,3);
   document.getElementById('kwh_podium').innerHTML = top3.map((d,i)=>`
-    <div class="podium-item"><div class="podium-rank r${i+1}">${i+1}</div><div class="podium-name">${d.unit}</div><div class="podium-val">${d.diff>=0?'+':''}${(d.diff/1e6).toFixed(2)} GWh</div></div>`).join('');
+    <div class="podium-item"><div class="podium-rank r${i+1}">${i+1}</div><div class="podium-name">${d.label}</div><div class="podium-val">${d.diff>=0?'+':''}${(d.diff/1e6).toFixed(2)} GWh</div></div>`).join('');
 
   destroyChart('kwh_chart');
   charts['kwh_chart'] = new Chart(document.getElementById('kwh_chart'), {
@@ -744,12 +918,12 @@ function kwhRender(rows){
 
   document.getElementById('kwh_insight').innerHTML = `
     <div class="ki-point"><b>Tren ${growth>=0?'positif':'negatif'}:</b> Energi siap jual ${growth>=0?'mencapai':'turun ke'} ${(totalLast/1e6).toFixed(2)} GWh, ${growth>=0?'meningkat':'menurun'} ${Math.abs(growth).toFixed(1)}% dibanding ${prev||'bulan sebelumnya'}.</div>
-    <div class="ki-point"><b>Kontributor utama:</b> ${top3.map(d=>d.unit).join(', ')} menjadi kontributor pertumbuhan terbesar bulan ini.</div>
-    <div class="ki-point"><b>Jumlah unit terpantau:</b> ${units.length} unit/kode proses aktif tercatat pada periode ${last||''}.</div>
-    <div class="ki-point"><b>Tindak lanjut:</b> Evaluasi lebih lanjut pada unit yang mengalami penurunan untuk penguatan kualitas billing.</div>`;
+    <div class="ki-point"><b>Kontributor utama:</b> ${top3.map(d=>d.label).join(', ')} menjadi kontributor pertumbuhan terbesar bulan ini.</div>
+    <div class="ki-point"><b>Cakupan data:</b> ${hasUlp?`${ulps.length} ULP dengan total ${kodeUnits.length} baris kode proses billing`:`${kodeUnits.length} kode proses billing`} tercatat pada periode ${last||''}.</div>
+    <div class="ki-point"><b>Tindak lanjut:</b> Evaluasi lebih lanjut pada ULP/kode proses yang mengalami penurunan untuk penguatan kualitas billing.</div>`;
 
   showDash('kwh');
-  setStatus('kwh_status', true, 'Data berhasil dimuat.');
+  setStatus('kwh_status', true, 'Data berhasil dimuat (' + (hasUlp?ulps.length+' ULP, ':'') + kodeUnits.length + ' kode proses).');
 }
 async function kwhLoad(){
   const url = document.getElementById('kwh_url').value.trim();
@@ -759,16 +933,16 @@ async function kwhLoad(){
 }
 function kwhSample(){
   kwhRender([
-    {Unit:'51MDNAI', Periode:'APR-26', KWh_Jual:'152863648'},
-    {Unit:'51MDNAI', Periode:'MEI-26', KWh_Jual:'154635648'},
-    {Unit:'51MDNAR', Periode:'APR-26', KWh_Jual:'8146926'},
-    {Unit:'51MDNAR', Periode:'MEI-26', KWh_Jual:'26937739'},
-    {Unit:'51MDNBA', Periode:'APR-26', KWh_Jual:'22829039'},
-    {Unit:'51MDNBA', Periode:'MEI-26', KWh_Jual:'21833204'},
-    {Unit:'51MDNBL', Periode:'APR-26', KWh_Jual:'21507120'},
-    {Unit:'51MDNBL', Periode:'MEI-26', KWh_Jual:'22591393'},
-    {Unit:'51MDNH', Periode:'APR-26', KWh_Jual:'99992'},
-    {Unit:'51MDNH', Periode:'MEI-26', KWh_Jual:'122331'},
+    {ULP:'MADIUN KOTA', Kode:'51MDNAI-TM', Periode:'2026-04', KWh_Jual:'5366934'},
+    {ULP:'MADIUN KOTA', Kode:'51MDNAI-TM', Periode:'2026-05', KWh_Jual:'5591527'},
+    {ULP:'MADIUN KOTA', Kode:'51MDNAR', Periode:'2026-04', KWh_Jual:'2894845'},
+    {ULP:'MADIUN KOTA', Kode:'51MDNAR', Periode:'2026-05', KWh_Jual:'3035297'},
+    {ULP:'MADIUN KOTA', Kode:'51MDNBA', Periode:'2026-04', KWh_Jual:'4691024'},
+    {ULP:'MADIUN KOTA', Kode:'51MDNBA', Periode:'2026-05', KWh_Jual:'4973431'},
+    {ULP:'MAGETAN', Kode:'51MDNAR', Periode:'2026-04', KWh_Jual:'1271288'},
+    {ULP:'MAGETAN', Kode:'51MDNAR', Periode:'2026-05', KWh_Jual:'1334962'},
+    {ULP:'MAGETAN', Kode:'51MDNBA', Periode:'2026-04', KWh_Jual:'5276267'},
+    {ULP:'MAGETAN', Kode:'51MDNBA', Periode:'2026-05', KWh_Jual:'5501676'},
   ]);
 }
 
@@ -1145,6 +1319,82 @@ function progSample(){
     {Periode:'2026-05', KWh_Produksi:'165662901', KWh_Jual:'152365655', Susut_Persen:'7.48', Status:'Prognosa'},
   ]);
 }
+
+/* ================= AUTO-SAVE LINK & AUTO-REFRESH ================= */
+// Supaya link CSV tidak perlu ditempel ulang tiap buka dashboard: link disimpan di
+// localStorage browser begitu berhasil dimuat, lalu otomatis dimuat lagi saat halaman
+// dibuka, dan disegarkan berkala tanpa perlu klik "Muat data" manual.
+const AUTO_STORAGE_KEY = 'up3madiun_dash_links_v1';
+const AUTO_REFRESH_MS = 5 * 60 * 1000; // refresh data setiap 5 menit
+
+const AUTO_TABS = [
+  { urlId:'susut_url', loadFn:()=>susutLoad() },
+  { urlId:'kwh_url',   loadFn:()=>kwhLoad() },
+  { urlId:'comp_url',  loadFn:()=>compLoad() },
+  { urlId:'pra_url',   loadFn:()=>praLoad() },
+  { urlId:'gm_url',    loadFn:()=>gmLoad() },
+  { urlId:'prog_url',  loadFn:()=>progLoad() },
+];
+
+function getSavedLinks(){
+  try{ return JSON.parse(localStorage.getItem(AUTO_STORAGE_KEY) || '{}'); }
+  catch(e){ return {}; }
+}
+function saveLink(urlId, url){
+  const links = getSavedLinks();
+  if(url){ links[urlId] = url; } else { delete links[urlId]; }
+  localStorage.setItem(AUTO_STORAGE_KEY, JSON.stringify(links));
+}
+
+// Bungkus tiap tombol "Muat data": begitu link diisi & berhasil dimuat, otomatis tersimpan.
+AUTO_TABS.forEach(({urlId})=>{
+  const input = document.getElementById(urlId);
+  if(!input) return;
+  input.addEventListener('change', ()=> saveLink(urlId, input.value.trim()));
+});
+// Simpan juga tepat saat tombol "Muat data" ditekan manual (menangkap kasus tanpa blur/change dulu).
+document.querySelectorAll('.config button:not(.secondary)').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const input = btn.parentElement.querySelector('input[id$="_url"]');
+    if(input && input.value.trim()) saveLink(input.id, input.value.trim());
+  });
+});
+
+function refreshBadge(msg){
+  let el = document.getElementById('auto_refresh_badge');
+  if(!el){
+    el = document.createElement('div');
+    el.id = 'auto_refresh_badge';
+    el.style.cssText = 'position:fixed;bottom:14px;right:14px;background:#0d2a4a;color:#fff;font-size:11px;font-weight:600;padding:7px 12px;border-radius:20px;box-shadow:0 4px 14px rgba(13,42,74,.25);z-index:999;font-family:Inter,sans-serif;opacity:.92;';
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+}
+
+async function autoLoadAll(isInitial){
+  const links = getSavedLinks();
+  const tabsWithLink = AUTO_TABS.filter(t => links[t.urlId]);
+  if(!tabsWithLink.length) return;
+  if(isInitial){
+    tabsWithLink.forEach(({urlId})=>{
+      const input = document.getElementById(urlId);
+      if(input) input.value = links[urlId];
+    });
+  }
+  refreshBadge('🔄 Memuat ulang data...');
+  for(const {urlId, loadFn} of tabsWithLink){
+    try{ await loadFn(); } catch(e){ /* status sudah ditangani masing-masing Load() */ }
+  }
+  const now = new Date();
+  refreshBadge('✓ Data terbaru — ' + now.toLocaleTimeString('id-ID', {hour:'2-digit',minute:'2-digit'}));
+}
+
+// Saat halaman pertama dibuka: isi ulang link yang tersimpan lalu langsung muat datanya.
+window.addEventListener('DOMContentLoaded', ()=>{ autoLoadAll(true); });
+// Refresh berkala tiap 5 menit tanpa perlu interaksi user (menangkap update data terbaru di sheet).
+setInterval(()=>autoLoadAll(false), AUTO_REFRESH_MS);
+// Refresh juga begitu tab browser kembali aktif (misalnya user buka lagi setelah lama idle).
+document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='visible') autoLoadAll(false); });
 </script>
 </body>
 </html>

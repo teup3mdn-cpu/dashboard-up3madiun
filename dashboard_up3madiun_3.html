@@ -606,6 +606,16 @@ function findKey(obj, candidates){
   }
   return null;
 }
+// Versi bertingkat: cek grup kandidat paling SPESIFIK dulu di SEMUA kolom, baru turun ke
+// grup yang lebih umum kalau tidak ketemu. Ini mencegah kata umum seperti "target" salah
+// menangkap kolom "Target_Bulanan" padahal yang dicari adalah "Target_Kumulatif".
+function findKeyPriority(obj, candidateGroups){
+  for(const group of candidateGroups){
+    const found = findKey(obj, group);
+    if(found) return found;
+  }
+  return null;
+}
 function num(v){ return parseFloat(String(v||'0').replace(',','.')) || 0; }
 async function fetchCSV(url){
   const res = await fetch(url);
@@ -1143,9 +1153,16 @@ function praSample(){
 let p2tlData = [];
 function p2tlRender(rows){
   const bKey = findKey(rows[0], ['bulan']);
-  const tKey = findKey(rows[0], ['targetkumulatif','targetkum','target']);
-  const rKey = findKey(rows[0], ['realisasikumulatif','realisasikum','realisasi']);
+  // PENTING: cek kolom "kumulatif" dulu di SEMUA kolom sebelum jatuh ke kata umum "target"/
+  // "realisasi" — supaya tidak salah menangkap kolom "Target_Bulanan"/"Realisasi_Bulanan"
+  // yang juga mengandung kata itu (ini penyebab bug sebelumnya: kumulatif ikut ambil angka bulanan).
+  const tKey = findKeyPriority(rows[0], [['targetkumulatif','targetkum'], ['target']]);
+  const rKey = findKeyPriority(rows[0], [['realisasikumulatif','realisasikum'], ['realisasi']]);
   if(!bKey||!tKey||!rKey){ setStatus('p2tl_status', false, 'Kolom Bulan/Target_Kumulatif/Realisasi_Kumulatif tidak ditemukan.'); return; }
+  if(tKey.toLowerCase().replace(/[^a-z0-9]/g,'').includes('bulanan') || rKey.toLowerCase().replace(/[^a-z0-9]/g,'').includes('bulanan')){
+    setStatus('p2tl_status', false, 'Peringatan: kolom yang terdeteksi ('+tKey+' / '+rKey+') tampaknya kolom BULANAN, bukan KUMULATIF. Pastikan CSV punya kolom bernama persis "Target_Kumulatif" dan "Realisasi_Kumulatif".');
+    return;
+  }
   // PENTING: kolom Target_Kumulatif & Realisasi_Kumulatif di CSV HARUS sudah berisi nilai
   // kumulatif (sama seperti kolom Target_Kumulatif/Realisasi_Kumulatif di sheet sumber),
   // BUKAN nilai bulanan. Dashboard tidak menjumlahkan lagi — hanya mengambil nilai bulan

@@ -132,7 +132,7 @@
 
   .exec-footer{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:14px;}
   @media (max-width:900px){.exec-footer{grid-template-columns:1fr;}}
-  .exec-foot-card border-radius:10px;padding:14px 16px;font-size:12.5px;}
+  .exec-foot-card{border-radius:10px;padding:14px 16px;font-size:12.5px;}
   .exec-foot-card.green{background:var(--green-bg);}
   .exec-foot-card.red{background:var(--red-bg);}
   .exec-foot-card.blue{background:var(--blue-bg);}
@@ -222,14 +222,197 @@
 
 <!-- ================= TAB 1: SUSUT PER ULP ================= -->
 <div class="tab-panel active" id="tab-susut">
-  <!-- Sisa kode tab susut dipertahankan -->
   <div class="config">
-    <input id="susut_url" type="text" placeholder="Link CSV" />
+    <input id="susut_url" type="text" placeholder="Link CSV (kolom: ULP, Bulan, Target_Bulanan, Realisasi_Bulanan, Target_Kumulatif, Realisasi_Kumulatif)" />
     <button onclick="susutLoad()">Muat data</button>
     <button class="secondary" onclick="susutSample()">Lihat contoh</button>
+    <div class="hint">Format: satu baris per <b>ULP per bulan</b>. Kolom: <b>ULP, Bulan, Target_Bulanan, Realisasi_Bulanan, Target_Kumulatif, Realisasi_Kumulatif</b> (semua dalam persen, contoh: 7.56). Urutkan baris dari bulan paling lama ke paling baru.</div>
     <div class="status" id="susut_status"></div>
   </div>
-  <!-- ... sisa elemen HTML disembunyikan untuk ringkas ... -->
+  <div id="susut_dash" style="display:none;">
+    <div class="exec-banner">
+      <div class="exec-banner-logo">⚡<span>PLN<br><small>UP3 MADIUN</small></span></div>
+      <div class="exec-banner-title">
+        <h2>KINERJA SUSUT UP3 MADIUN</h2>
+        <div class="exec-banner-period" id="susut_period">SD MEI 2026</div>
+      </div>
+    </div>
+
+    <div class="exec-summary" id="susut_exec_summary" style="display:none;">
+      <div class="eyebrow">Ringkasan eksekutif</div>
+      <div class="headline" id="susut_headline"></div>
+      <div class="exec-grid" id="susut_exec_grid"></div>
+    </div>
+
+    <div class="exec-layout">
+      <div class="exec-side">
+        <div class="exec-side-title">RINGKASAN UTAMA</div>
+        <div id="susut_side"></div>
+      </div>
+      <div class="exec-main">
+        <div class="kpi-row" id="susut_kpi"></div>
+        <div class="panels">
+          <div class="panel">
+            <div class="panel-head" id="susut_bar_head">Target vs realisasi kumulatif per ULP</div>
+            <div class="panel-body"><div class="chart-wrap"><canvas id="susut_chart"></canvas></div></div>
+          </div>
+          <div class="panel">
+            <div class="panel-head">Ranking kinerja susut per ULP</div>
+            <div class="panel-body"><div class="rank-list" id="susut_rank"></div></div>
+          </div>
+        </div>
+        <div class="panels" style="margin-top:14px;">
+          <div class="panel">
+            <div class="panel-head">Tren susut bulanan UP3 Madiun</div>
+            <div class="panel-body"><div class="chart-wrap"><canvas id="susut_trend"></canvas></div>
+              <div class="donut-caption" id="susut_trend_caption"></div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-head">Detail per ULP (kartu)</div>
+            <div class="panel-body" id="susut_cards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;"></div>
+          </div>
+        </div>
+        <div class="panel" style="margin-top:14px;">
+          <div class="panel-head">Matriks target &amp; realisasi bulanan per ULP</div>
+          <div class="panel-body" style="padding:0;overflow-x:auto;">
+            <table id="susut_matrix" style="font-size:11.5px;"></table>
+            <div class="legend" style="padding:8px 14px;">
+              Warna TARGET/REALISASI &mdash; <b style="color:#c98500;">&#9632;</b> &lt;6% &nbsp;
+              <b style="color:#1c8a4a;">&#9632;</b> 6%&ndash;9,9% &nbsp;
+              <b style="color:#d23b3b;">&#9632;</b> 10%&ndash;12,8% &nbsp;
+              <b style="color:#1a1a1a;">&#9632;</b> &gt;12,8% &nbsp; | &nbsp;
+              Warna % TARGET &mdash; <b style="color:#1c8a4a;">&#9632;</b> tercapai (&ge;100%) &nbsp;
+              <b style="color:#c9a600;">&#9632;</b> 95%&ndash;99% &nbsp;
+              <b style="color:#d23b3b;">&#9632;</b> &lt;95%
+            </div>
+          </div>
+        </div>
+        <div class="exec-footer">
+          <div class="exec-foot-card green">
+            <div class="exec-foot-head">✓ Insight utama</div>
+            <ul id="susut_insight"></ul>
+          </div>
+          <div class="exec-foot-card red">
+            <div class="exec-foot-head">⚠ Perlu perhatian</div>
+            <ul id="susut_monitor"></ul>
+          </div>
+          <div class="exec-foot-card blue">
+            <div class="exec-foot-head">→ Rekomendasi tindak lanjut</div>
+            <ul id="susut_reco"></ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="empty" id="susut_empty">Masukkan link CSV atau klik "Lihat contoh".</div>
+</div>
+
+<!-- ================= TAB 2: EVALUASI KWH JUAL ================= -->
+<div class="tab-panel" id="tab-kwhjual">
+  <div class="config">
+    <input id="kwh_url" type="text" placeholder="Link CSV (kolom: ULP, Kode, Periode (YYYY-MM), KWh_Jual, Unit)" />
+    <button onclick="kwhLoad()">Muat data</button>
+    <button class="secondary" onclick="kwhSample()">Lihat contoh</button>
+    <div class="hint">Format long: <b>ULP, Kode, Periode (YYYY-MM), KWh_Jual</b> — satu baris per ULP per kode proses billing per bulan. "Kode" adalah kode proses pembacaan pascabayar (51MDNAI, 51MDNAR, dst), <b>bukan</b> nama unit/ULP. Sumber: sheet PER KODE PROSES.</div>
+    <div class="status" id="kwh_status"></div>
+  </div>
+  <div id="kwh_dash" style="display:none;">
+    <div class="header-banner-light">
+      <h2 id="kwh_title">EVALUASI KWH JUAL UP3 MADIUN</h2>
+      <div class="sub" id="kwh_sub">Penjualan berubah dibanding bulan sebelumnya</div>
+    </div>
+    <div class="icon-kpi-row" id="kwh_kpi"></div>
+    <div class="panels">
+      <div class="panel">
+        <div class="panel-head">Perbandingan kWh jual (GWh)</div>
+        <div class="panel-body"><div class="chart-wrap"><canvas id="kwh_chart"></canvas></div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head">Top kontributor pertumbuhan</div>
+        <div class="panel-body" id="kwh_podium"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head">Rincian kode proses billing per ULP</div>
+        <div class="panel-body" style="padding:0;">
+          <table><thead><tr><th>ULP</th><th>Kode proses</th><th id="kwh_th_prev">Bln -1</th><th id="kwh_th_last">Bln terakhir</th><th>Growth</th></tr></thead><tbody id="kwh_table"></tbody></table>
+        </div>
+      </div>
+    </div>
+    <div class="key-insight-banner">
+      <div class="ki-tab">KEY<br>INSIGHT</div>
+      <div class="ki-points" id="kwh_insight"></div>
+    </div>
+
+    <div class="panel" style="margin-top:14px;">
+      <div class="panel-head">Komponen kWh jual: PAL (Prognosa) vs Realisasi P2TL vs Prabayar</div>
+      <div class="panel-body">
+        <div class="config" style="margin-bottom:12px;">
+          <input id="comp_url" type="text" placeholder="Link CSV (kolom: Periode, PAL_Prognosa, Realisasi_P2TL, Prabayar) — level UP3" />
+          <button onclick="compLoad()">Muat data</button>
+          <button class="secondary" onclick="compSample()">Lihat contoh</button>
+          <div class="hint">Format UP3 (bukan per unit): <b>Periode (YYYY-MM), PAL_Prognosa, Realisasi_P2TL, Prabayar</b> dalam kWh. PAL &amp; P2TL dari sheet "prognosa SUSUT" (kolom C dan D), Prabayar dari sheet "PREDIKSI PPOB" / tab DASH_Prabayar.</div>
+          <div class="status" id="comp_status"></div>
+        </div>
+        <div id="comp_dash" style="display:none;">
+          <div class="icon-kpi-row" id="comp_kpi"></div>
+          <div class="chart-wrap" style="height:280px;"><canvas id="comp_chart"></canvas></div>
+        </div>
+        <div class="empty" id="comp_empty">Masukkan link CSV komponen atau klik "Lihat contoh".</div>
+      </div>
+    </div>
+  </div>
+  <div class="empty" id="kwh_empty">Masukkan link CSV atau klik "Lihat contoh".</div>
+</div>
+
+<!-- ================= TAB 3: PENJUALAN PRABAYAR ================= -->
+<div class="tab-panel" id="tab-prabayar">
+  <div class="config">
+    <input id="pra_url" type="text" placeholder="Link CSV (kolom: ULP, Periode (YYYY-MM), GWh_Prabayar)" />
+    <button onclick="praLoad()">Muat data</button>
+    <button class="secondary" onclick="praSample()">Lihat contoh</button>
+    <div class="hint">Format long: <b>ULP, Periode (YYYY-MM), GWh_Prabayar</b> per baris per ULP per bulan. Sumber: sheet PREDIKSI PPOB (bulan yang sudah lewat = realisasi).</div>
+    <div class="status" id="pra_status"></div>
+  </div>
+  <div class="manual-box">
+    <div class="title">Input manual (data yang belum tersedia otomatis)</div>
+    <div class="manual-grid">
+      <div><label>Komposisi pelanggan prabayar (%)</label><input type="number" step="0.01" id="pra_komposisi" value="52.67" oninput="praRecalcManual()"></div>
+      <div><label>Realisasi s.d tgl 20 (% dari total bulan)</label><input type="number" step="0.01" id="pra_pct_awal" value="68" oninput="praRecalcManual()"></div>
+    </div>
+  </div>
+  <div id="pra_dash" style="display:none;">
+    <div class="header-banner-light">
+      <h2 id="pra_title">KINERJA PENJUALAN KWH PRABAYAR</h2>
+      <div class="sub" id="pra_sub">Penjualan berubah dibanding bulan sebelumnya</div>
+    </div>
+    <div class="icon-kpi-row" id="pra_kpi"></div>
+    <div class="panels">
+      <div class="panel">
+        <div class="panel-head">Perbandingan kWh jual prabayar (GWh)</div>
+        <div class="panel-body"><div class="chart-wrap"><canvas id="pra_chart"></canvas></div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head">Top kontributor pertumbuhan (GWh)</div>
+        <div class="panel-body" id="pra_podium"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head">Pola pembelian token (estimasi)</div>
+        <div class="panel-body" id="pra_pattern"></div>
+      </div>
+    </div>
+    <div class="panel" style="margin-top:14px;">
+      <div class="panel-head">Riwayat bulanan</div>
+      <div class="panel-body" style="padding:0;">
+        <table><thead><tr><th>Periode</th><th>GWh</th><th>Growth</th></tr></thead><tbody id="pra_table"></tbody></table>
+      </div>
+    </div>
+    <div class="key-insight-banner">
+      <div class="ki-tab">KEY<br>INSIGHT</div>
+      <div class="ki-points" id="pra_insight"></div>
+    </div>
+  </div>
+  <div class="empty" id="pra_empty">Masukkan link CSV atau klik "Lihat contoh".</div>
 </div>
 
 <!-- ================= TAB 4: EVALUASI P2TL ================= -->
@@ -240,73 +423,1249 @@
     <button class="secondary" onclick="p2tlSample()">Lihat contoh</button>
     <div class="hint">Format (5 kolom, urut persis seperti kolom C&ndash;G di sheet sumber): <b>Bulan, Target_Bulanan, Realisasi_Bulanan, Target_Kumulatif, Realisasi_Kumulatif</b>. Kolom diambil berdasarkan <b>urutan posisi setelah kolom Bulan</b> (bukan nama header), supaya tidak salah tangkap seperti sebelumnya. Realisasi_Bulanan adalah nilai <b>s.d hari ini untuk bulan berjalan</b> (link langsung ke sumber, ter-update real-time).</div>
     <div class="status" id="p2tl_status"></div>
+    <input id="p2tl_ulp_url" type="text" placeholder="Link CSV per ULP per bulan (kolom: ULP, Bulan, Target_Bulanan, Realisasi_Bulanan, Target_Kumulatif, Realisasi_Kumulatif)" style="margin-top:8px;" />
+    <button onclick="p2tlUlpLoad()">Muat data ULP</button>
+    <button class="secondary" onclick="p2tlUlpSample()">Lihat contoh</button>
+    <div class="hint">Format long (satu baris per <b>ULP per bulan</b>, 6 kolom): <b>ULP, Bulan, Target_Bulanan, Realisasi_Bulanan, Target_Kumulatif, Realisasi_Kumulatif</b> — persis seperti matriks TARGET/REAL/% per unit di sheet sumber (Jan&ndash;Des). Boleh menyertakan baris total "UP3 MADIUN" sebagai baris agregat paling bawah.</div>
+    <div class="status" id="p2tl_ulp_status"></div>
   </div>
-  <!-- ... Sisa elemen HTML tab p2tl ... -->
+  <div class="manual-box">
+    <div class="title">Input manual (update sendiri tiap periode)</div>
+    <div class="manual-grid">
+      <div><label>Jumlah regu TAD</label><input type="number" id="p2tl_regu_tad" value="9" oninput="p2tlRecalc()"></div>
+      <div><label>Jumlah regu Mandiri</label><input type="number" id="p2tl_regu_mandiri" value="1" oninput="p2tlRecalc()"></div>
+      <div><label>Total TS / benefit (Rp)</label><input type="number" id="p2tl_ts" value="1887611414" oninput="p2tlRecalc()"></div>
+      <div><label>Total biaya P2TL (Rp)</label><input type="number" id="p2tl_cost" value="1280774270" oninput="p2tlRecalc()"></div>
+    </div>
+  </div>
+  <div id="p2tl_dash" style="display:none;">
+    <div class="exec-banner">
+      <div class="exec-banner-logo">⚡<span>PLN<br><small>UP3 MADIUN</small></span></div>
+      <div class="exec-banner-title">
+        <h2>EVALUASI KINERJA P2TL UP3 MADIUN</h2>
+        <div class="exec-banner-period" id="p2tl_period">PERIODE JANUARI &ndash; MEI 2026</div>
+      </div>
+    </div>
+    <div class="exec-layout">
+      <div class="exec-side">
+        <div class="exec-side-title">RINGKASAN UTAMA</div>
+        <div id="p2tl_side"></div>
+      </div>
+      <div class="exec-main">
+        <div id="p2tl_live_banner" style="background:linear-gradient(135deg,#0d3a5c,#123a63);color:#fff;border-radius:12px;padding:14px 18px;margin-bottom:14px;box-shadow:var(--shadow-sm);">
+          <div style="font-size:12px;opacity:.85;margin-bottom:10px;" id="p2tl_live_caption"></div>
+          <div id="p2tl_live_points" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;"></div>
+        </div>
+        <div class="kpi-row" id="p2tl_kpi"></div>
+        <div class="panels">
+          <div class="panel">
+            <div class="panel-head">Capaian target kumulatif</div>
+            <div class="panel-body"><div class="chart-wrap" style="height:260px;"><canvas id="p2tl_donut"></canvas></div>
+              <div class="donut-caption" id="p2tl_donut_caption"></div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-head">Analisis finansial</div>
+            <div class="panel-body" id="p2tl_finance"></div>
+          </div>
+        </div>
+        <div class="panel" style="margin-top:14px;">
+          <div class="panel-head">Matriks target &amp; realisasi P2TL bulanan per ULP (kWh)</div>
+          <div class="panel-body" style="padding:0;overflow-x:auto;">
+            <table id="p2tl_ulp_matrix" style="font-size:11.5px;"></table>
+            <div class="legend" style="padding:8px 14px;">
+              Warna % CAPAIAN &mdash; <b style="color:#1c8a4a;">&#9632;</b> tercapai (&ge;100%) &nbsp;
+              <b style="color:#c9a600;">&#9632;</b> 95%&ndash;99% &nbsp;
+              <b style="color:#d23b3b;">&#9632;</b> &lt;95%
+            </div>
+            <div class="chart-wrap" style="height:220px;padding:10px 14px 14px;"><canvas id="p2tl_chart"></canvas></div>
+          </div>
+        </div>
+        <div class="exec-footer">
+          <div class="exec-foot-card green">
+            <div class="exec-foot-head">✓ Insight utama</div>
+            <ul id="p2tl_insight"></ul>
+          </div>
+          <div class="exec-foot-card red">
+            <div class="exec-foot-head">⚠ Hal yang perlu dimonitor</div>
+            <ul id="p2tl_monitor"></ul>
+          </div>
+          <div class="exec-foot-card blue">
+            <div class="exec-foot-head">⚙ Rekomendasi</div>
+            <ul id="p2tl_rekom"></ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="empty" id="p2tl_empty">Masukkan link CSV atau klik "Lihat contoh".</div>
+</div>
+
+<!-- ================= TAB 5: GANTI METER & AMRISASI ================= -->
+<div class="tab-panel" id="tab-gantimeter">
+  <div class="config">
+    <input id="gm_url" type="text" placeholder="Link CSV (kolom: Bulan, Target_Kumulatif, Realisasi_Kumulatif)" />
+    <button onclick="gmLoad()">Muat data</button>
+    <button class="secondary" onclick="gmSample()">Lihat contoh</button>
+    <div class="hint">Format: <b>Bulan, Target_Kumulatif, Realisasi_Kumulatif</b> (unit ganti meter). Sumber: sheet GANTI METER.</div>
+    <div class="status" id="gm_status"></div>
+  </div>
+  <div class="manual-box">
+    <div class="title">Input manual amrisasi (update sendiri tiap periode)</div>
+    <div class="manual-grid">
+      <div><label>Target amrisasi tahun ini</label><input type="number" id="gm_amr_target" value="415" oninput="gmRecalc()"></div>
+      <div><label>Realisasi amrisasi s.d bulan ini</label><input type="number" id="gm_amr_real" value="124" oninput="gmRecalc()"></div>
+    </div>
+  </div>
+  <div id="gm_dash" style="display:none;">
+    <div class="kpi-row" id="gm_kpi"></div>
+    <div class="panels">
+      <div class="panel">
+        <div class="panel-head">Realisasi kumulatif ganti meter per bulan</div>
+        <div class="panel-body"><div class="chart-wrap"><canvas id="gm_chart" role="img" aria-label="Grafik realisasi ganti meter"></canvas></div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head">Rincian bulanan</div>
+        <div class="panel-body" style="padding:0;">
+          <table><thead><tr><th>Bulan</th><th>Target</th><th>Realisasi</th><th>Capaian</th></tr></thead><tbody id="gm_table"></tbody></table>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="empty" id="gm_empty">Masukkan link CSV atau klik "Lihat contoh".</div>
+</div>
+
+<!-- ================= TAB 6: PROGNOSA SUSUT ================= -->
+<div class="tab-panel" id="tab-prognosa">
+  <div class="config">
+    <input id="prog_url" type="text" placeholder="Link CSV (kolom: Periode, KWh_Produksi, KWh_Jual, Susut_Persen, Status)" />
+    <button onclick="progLoad()">Muat data</button>
+    <button class="secondary" onclick="progSample()">Lihat contoh</button>
+    <div class="hint">Format: <b>Periode (YYYY-MM), KWh_Produksi, KWh_Jual, Susut_Persen, Status (Realisasi/Prognosa)</b>. Sumber: sheet prognosa SUSUT &mdash; bulan yang sudah fix ditandai "Realisasi", bulan berjalan ditandai "Prognosa".</div>
+    <div class="status" id="prog_status"></div>
+  </div>
+  <div id="prog_dash" style="display:none;">
+    <div class="exec-banner" style="background:linear-gradient(135deg,#0d3a5c,#06304f 60%, #0a4f2e 130%);">
+      <div class="exec-banner-logo">⚡<span>PLN<br><small>UP3 MADIUN</small></span></div>
+      <div class="exec-banner-title">
+        <h2>ANALISA PROGNOSA SUSUT, KWH PRODUKSI &amp; KWH JUAL</h2>
+        <div class="exec-banner-period" id="prog_period">BULAN BERJALAN</div>
+      </div>
+    </div>
+    <div class="icon-kpi-row" id="prog_kpi"></div>
+    <div class="panels">
+      <div class="panel">
+        <div class="panel-head">KWh produksi vs KWh jual per bulan</div>
+        <div class="panel-body"><div class="chart-wrap"><canvas id="prog_chart1"></canvas></div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head">Tren susut (%) &mdash; realisasi vs prognosa</div>
+        <div class="panel-body"><div class="chart-wrap"><canvas id="prog_chart2"></canvas></div>
+          <div class="donut-caption" id="prog_trend_caption"></div>
+        </div>
+      </div>
+    </div>
+    <div class="panel" style="margin-top:14px;">
+      <div class="panel-head">Rincian per periode</div>
+      <div class="panel-body" style="padding:0;">
+        <table><thead><tr><th>Periode</th><th>Status</th><th>KWh produksi</th><th>KWh jual</th><th>KWh susut</th><th>Susut %</th></tr></thead><tbody id="prog_table"></tbody></table>
+      </div>
+    </div>
+    <div class="key-insight-banner">
+      <div class="ki-tab" style="background:#0a4f2e;">KEY<br>INSIGHT</div>
+      <div class="ki-points" id="prog_insight"></div>
+    </div>
+  </div>
+  <div class="empty" id="prog_empty">Masukkan link CSV atau klik "Lihat contoh".</div>
 </div>
 
 <script>
-let charts = {};
-// ... helper functions (parseCSV, findKey, etc) ...
+/* ---------- shared helpers ---------- */
+function parseCSV(text){
+  const rowsRaw = [];
+  let row = [], field = '', inQuotes = false;
+  for(let i=0;i<text.length;i++){
+    const c = text[i], next = text[i+1];
+    if(inQuotes){
+      if(c === '"' && next === '"'){ field += '"'; i++; }
+      else if(c === '"'){ inQuotes = false; }
+      else { field += c; }
+    } else {
+      if(c === '"'){ inQuotes = true; }
+      else if(c === ','){ row.push(field); field=''; }
+      else if(c === '\r'){ /* skip */ }
+      else if(c === '\n'){ row.push(field); rowsRaw.push(row); row=[]; field=''; }
+      else { field += c; }
+    }
+  }
+  if(field.length || row.length){ row.push(field); rowsRaw.push(row); }
+  const nonEmpty = rowsRaw.filter(r => r.some(c => String(c).trim() !== ''));
+  if(!nonEmpty.length) return [];
+  const headers = nonEmpty[0].map(h => h.trim());
+  return nonEmpty.slice(1).map(cells => {
+    const obj = {};
+    headers.forEach((h,i) => obj[h] = (cells[i] !== undefined ? cells[i].trim() : ''));
+    return obj;
+  });
+}
+function findKey(obj, candidates){
+  for(const k of Object.keys(obj)){
+    const kl = k.toLowerCase().replace(/[^a-z0-9]/g,'');
+    for(const c of candidates) if(kl.includes(c)) return k;
+  }
+  return null;
+}
+// Versi bertingkat: cek grup kandidat paling SPESIFIK dulu di SEMUA kolom, baru turun ke
+// grup yang lebih umum kalau tidak ketemu. Ini mencegah kata umum seperti "target" salah
+// menangkap kolom "Target_Bulanan" padahal yang dicari adalah "Target_Kumulatif".
+function findKeyPriority(obj, candidateGroups){
+  for(const group of candidateGroups){
+    const found = findKey(obj, group);
+    if(found) return found;
+  }
+  return null;
+}
+function num(v){ return parseFloat(String(v||'0').replace(',','.')) || 0; }
+async function fetchCSV(url){
+  const res = await fetch(url);
+  if(!res.ok) throw new Error('HTTP ' + res.status);
+  return parseCSV(await res.text());
+}
+function setStatus(id, ok, msg){
+  const el = document.getElementById(id);
+  el.className = 'status ' + (ok ? 'ok' : 'err');
+  el.textContent = msg;
+}
+function showDash(prefix){
+  document.getElementById(prefix+'_dash').style.display = 'block';
+  document.getElementById(prefix+'_empty').style.display = 'none';
+}
+
+/* ---- Tier warna susut: 4 tingkat berdasarkan nilai susut mentah (%) ----
+   <6%          -> orange
+   6% - 9.9%    -> hijau
+   10% - 12.8%  -> merah
+   >12.8%       -> hitam                                                     */
+function susutTierClass(v){
+  if(v < 6) return 'tier-orange';
+  if(v >= 6 && v <= 9.9) return 'tier-green';
+  if(v >= 10 && v <= 12.8) return 'tier-red';
+  return 'tier-black';
+}
+/* ---- Tier warna pencapaian target: 3 tingkat berdasarkan rasio Target/Realisasi (%) ----
+   >=100%        -> hijau (target tercapai / realisasi di bawah-sama target)
+   95% - 99.99%  -> kuning (mendekati target, sedikit di atas)
+   <95%          -> merah (jauh di atas target)                              */
+function achievementTierClass(ratioPct){
+  if(ratioPct >= 100) return 'ach-green';
+  if(ratioPct >= 95) return 'ach-yellow';
+  return 'ach-red';
+}
+
+/* ================= TAB 1: SUSUT ================= */
+function susutRender(rows){
+  const ulpKey = findKey(rows[0], ['ulp','unit']);
+  const bulanKey = findKey(rows[0], ['bulan']);
+  const tbKey = findKey(rows[0], ['targetbulanan','targetbln']);
+  const rbKey = findKey(rows[0], ['realisasibulanan','realisasibln']);
+  const tkKey = findKey(rows[0], ['targetkumulatif','targetkum']);
+  const rkKey = findKey(rows[0], ['realisasikumulatif','realisasikum']);
+  if(!ulpKey||!bulanKey||!tkKey||!rkKey){ setStatus('susut_status', false, 'Kolom ULP/Bulan/Target_Kumulatif/Realisasi_Kumulatif tidak ditemukan.'); return; }
+
+  const isFilled = v => v!==undefined && v!==null && String(v).trim()!=='';
+  const isUp3Total = ulpName => /^UP3\b/i.test(ulpName.trim());
+
+  const dataAll = rows.map(r=>({
+    ulp: String(r[ulpKey]||'').trim(), bulan: String(r[bulanKey]||'').trim(),
+    tb: tbKey?num(r[tbKey]):null, rb: rbKey?num(r[rbKey]):null,
+    tk:num(r[tkKey]), rk:num(r[rkKey]),
+    rkFilled: isFilled(r[rkKey])
+  })).filter(d=>d.ulp && d.bulan);
+
+  // Baris "UP3 MADIUN" (atau UP3 ...) adalah total gabungan yang sudah dihitung
+  // berbobot di sheet — dipisah dari data per-ULP supaya tidak ikut jadi ULP ke-8.
+  const data = dataAll.filter(d=>!isUp3Total(d.ulp));
+  const up3Data = dataAll.filter(d=>isUp3Total(d.ulp));
+
+  const ulps = [...new Set(data.map(d=>d.ulp))];
+  const bulans = [...new Set(data.map(d=>d.bulan))];
+  // Ambil bulan terakhir yang datanya sudah lengkap terisi untuk SEMUA ULP,
+  // jangan asal ambil baris paling bawah (bisa jadi bulan mendatang yang masih kosong).
+  const filledBulans = bulans.filter(b=>{
+    const rowsB = data.filter(d=>d.bulan===b);
+    return rowsB.length>0 && rowsB.every(d=>d.rkFilled);
+  });
+  const lastBulan = filledBulans.length ? filledBulans[filledBulans.length-1] : bulans[bulans.length-1];
+  const lastData = data.filter(d=>d.bulan===lastBulan);
+
+  // Gunakan baris "UP3 MADIUN" (total berbobot) untuk KPI atas jika tersedia;
+  // kalau tidak ada, fallback ke rata-rata sederhana antar ULP (kurang akurat).
+  const up3Row = up3Data.find(d=>d.bulan===lastBulan);
+  const avgT = up3Row ? up3Row.tk : lastData.reduce((s,d)=>s+d.tk,0)/lastData.length;
+  const avgR = up3Row ? up3Row.rk : lastData.reduce((s,d)=>s+d.rk,0)/lastData.length;
+  const pencapaian = avgR ? (avgT/avgR)*100 : 0;
+  const diAtas = lastData.filter(d=>d.rk>d.tk);
+  const diBawah = lastData.filter(d=>d.rk<=d.tk);
+
+  // ranking ULP dari yang terbaik (gap paling negatif / paling di bawah target) ke terburuk
+  const ranked = [...lastData].sort((a,b)=>(a.rk-a.tk)-(b.rk-b.tk));
+  const best = ranked[0], worst = ranked[ranked.length-1];
+  const maxScale = Math.max(...lastData.map(d=>Math.max(d.tk,d.rk))) * 1.15;
+
+  // tren bulan terakhir vs bulan sebelumnya (level UP3) untuk narasi
+  const up3Sorted = up3Data.filter(d=>d.rkFilled).sort((a,b)=>filledBulans.indexOf(a.bulan)-filledBulans.indexOf(b.bulan));
+  const up3Last = up3Sorted[up3Sorted.length-1], up3Prev = up3Sorted[up3Sorted.length-2];
+  const trendDiff = (up3Last && up3Prev) ? (up3Last.rk!=null?up3Last.rk:0) - (up3Prev.rk!=null?up3Prev.rk:0) : null;
+
+  document.getElementById('susut_period').textContent = `SD ${lastBulan} 2026`;
+
+  document.getElementById('susut_exec_summary').style.display = 'block';
+  document.getElementById('susut_headline').innerHTML = `Susut UP3 Madiun s.d <b>${lastBulan} 2026</b> tercatat <b>${avgR.toFixed(2)}%</b> dari target kumulatif <b>${avgT.toFixed(2)}%</b> — ${pencapaian>=100?`<b>memenuhi target</b> (pencapaian ${pencapaian.toFixed(2)}%)`:`<b>belum memenuhi target</b> (pencapaian ${pencapaian.toFixed(2)}%)`}. ${diAtas.length>0?`Sebanyak <b>${diAtas.length} dari ${ulps.length} ULP</b> masih di atas target dan perlu perhatian.`:`Seluruh <b>${ulps.length} ULP</b> sudah berada di bawah/sesuai target.`}`;
+  document.getElementById('susut_exec_grid').innerHTML = `
+    <div class="exec-point"><span class="tag pos">Terbaik</span><br><b>${best.ulp}</b> — realisasi ${best.rk.toFixed(2)}% (gap ${(best.rk-best.tk).toFixed(2)} vs target)</div>
+    <div class="exec-point"><span class="tag ${diAtas.length>0?'neg':'pos'}">${diAtas.length>0?'Perlu perhatian':'Aman'}</span><br><b>${worst.ulp}</b> — realisasi ${worst.rk.toFixed(2)}% (gap +${(worst.rk-worst.tk).toFixed(2)} vs target)</div>
+    <div class="exec-point"><span class="tag info">Tren bulanan</span><br>${trendDiff!=null?`${trendDiff<=0?'Membaik':'Memburuk'} ${Math.abs(trendDiff).toFixed(2)} poin vs ${up3Prev.bulan}`:'Data tren belum cukup'}</div>`;
+
+  document.getElementById('susut_side').innerHTML = `
+    <div class="exec-side-item"><div class="lbl">Jumlah ULP</div><div class="val">${ulps.length} ULP</div></div>
+    <div class="exec-side-item"><div class="lbl">Target kumulatif</div><div class="val">${avgT.toFixed(2)}%</div></div>
+    <div class="exec-side-item"><div class="lbl">Realisasi kumulatif</div><div class="val">${avgR.toFixed(2)}%</div></div>
+    <div class="exec-side-item"><div class="lbl">Pencapaian target</div><div class="val">${pencapaian.toFixed(2)}%</div></div>
+    <div class="exec-side-item"><div class="lbl">ULP di atas target</div><div class="val">${diAtas.length} ULP</div></div>
+    <div class="exec-side-item"><div class="lbl">ULP di bawah target</div><div class="val">${diBawah.length} ULP</div></div>
+    <div class="exec-side-item"><div class="lbl">ULP performa terbaik</div><div class="val" style="font-size:13px;">${best.ulp}</div></div>
+    <div class="exec-side-item"><div class="lbl">ULP perlu perhatian</div><div class="val" style="font-size:13px;">${worst.ulp}</div></div>`;
+
+  document.getElementById('susut_kpi').innerHTML = `
+    <div class="kpi-card green"><div class="kpi-label">Pencapaian target kumulatif</div><div class="kpi-value">${pencapaian.toFixed(2)}%</div><div class="kpi-sub">${pencapaian>=100?'Memenuhi target':'Belum memenuhi target'}</div></div>
+    <div class="kpi-card"><div class="kpi-label">Target kumulatif</div><div class="kpi-value">${avgT.toFixed(2)}%</div><div class="kpi-sub">SD ${lastBulan} 2026</div></div>
+    <div class="kpi-card green"><div class="kpi-label">Realisasi kumulatif</div><div class="kpi-value">${avgR.toFixed(2)}%</div><div class="kpi-sub">SD ${lastBulan} 2026</div></div>
+    <div class="kpi-card ${diAtas.length>0?'red':'green'}"><div class="kpi-label">ULP di atas target</div><div class="kpi-value">${diAtas.length} ULP</div><div class="kpi-sub">Perlu perhatian</div></div>`;
+  document.getElementById('susut_bar_head').textContent = `Target vs realisasi kumulatif per ULP — SD ${lastBulan} 2026`;
+
+  destroyChart('susut_chart');
+  charts['susut_chart'] = new Chart(document.getElementById('susut_chart'), {
+    type:'bar', data:{ labels:lastData.map(d=>d.ulp), datasets:[
+      {label:'Target kumulatif', data:lastData.map(d=>d.tk), backgroundColor:'#1f6fc6', borderRadius:4, maxBarThickness:22},
+      {label:'Realisasi kumulatif', data:lastData.map(d=>d.rk), backgroundColor:'#1c8a4a', borderRadius:4, maxBarThickness:22}]},
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom', labels:{boxWidth:10, font:{size:11}}}}, scales:{y:{beginAtZero:true, ticks:{callback:v=>v+'%'}}} }
+  });
+
+  document.getElementById('susut_rank').innerHTML = ranked.map((d,i)=>{
+    const gap = d.rk-d.tk, good = gap<=0;
+    const rankClass = i===0?'top':(i===ranked.length-1 && gap>0?'bottom':'');
+    const fillPct = Math.min(100,(d.rk/maxScale)*100);
+    const markerPct = Math.min(100,(d.tk/maxScale)*100);
+    return `<div class="rank-item">
+      <div class="rank-num ${rankClass}">${i+1}</div>
+      <div class="rank-name">${d.ulp}<small>Target ${d.tk.toFixed(2)}%</small></div>
+      <div class="rank-bar-track"><div class="rank-bar-fill ${good?'good':'bad'}" style="width:${fillPct}%;"></div><div class="rank-marker" style="left:${markerPct}%;"></div></div>
+      <div class="rank-gap ${good?'good':'bad'}">${gap>=0?'+':''}${gap.toFixed(2)}</div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('susut_cards').innerHTML = lastData.map(d=>{
+    const gap = d.rk - d.tk, good = gap<=0;
+    return `<div class="ulp-card ${good?'good':'bad'}">
+      <div class="name">ULP ${d.ulp}</div>
+      <div class="row">Target <b>${d.tk.toFixed(2)}%</b></div>
+      <div class="row">Realisasi <b>${d.rk.toFixed(2)}%</b></div>
+      <div class="gap">Gap: ${gap>=0?'+':''}${gap.toFixed(2)}</div>
+    </div>`;
+  }).join('');
+
+  // trend bulanan UP3 (rata-rata semua ULP per bulan) — hanya bulan yang sudah terisi
+  const trend = filledBulans.map(b=>{
+    const rowsB = data.filter(d=>d.bulan===b);
+    const avgRb = rowsB.reduce((s,d)=> s+(d.rb!=null?d.rb:d.rk), 0)/rowsB.length;
+    return {bulan:b, value:avgRb};
+  });
+  destroyChart('susut_trend');
+  charts['susut_trend'] = new Chart(document.getElementById('susut_trend'), {
+    type:'line', data:{ labels:trend.map(t=>t.bulan), datasets:[{label:'Realisasi bulanan', data:trend.map(t=>t.value), borderColor:'#1f6fc6', backgroundColor:'#1f6fc6', tension:0.25, pointRadius:4}] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{y:{ticks:{callback:v=>v+'%'}}} }
+  });
+  const lastT = trend[trend.length-1], prevT = trend[trend.length-2];
+  if(prevT){
+    const diff = lastT.value-prevT.value;
+    document.getElementById('susut_trend_caption').innerHTML = `Realisasi susut bulan ${lastT.bulan} sebesar <b>${lastT.value.toFixed(2)}%</b>, ${diff<=0?'menurun':'meningkat'} ${Math.abs(diff).toFixed(2)} poin dibanding bulan ${prevT.bulan} (${prevT.value.toFixed(2)}%).`;
+  }
+
+  // ---- matrix bulanan per ULP: TARGET, REALISASI (tier 4-warna) + % TARGET (tier 3-warna) ----
+  let thead = '<thead><tr><th>UNIT</th><th>Sat</th>' + bulans.map(b=>`<th>${b}</th>`).join('') + '</tr></thead>';
+  let tbody = '<tbody>';
+  // Catatan: matriks ini menampilkan nilai KUMULATIF (tk/rk), bukan bulanan (tb/rb) —
+  // sesuai permintaan, tb/rb hanya dipakai sebagai fallback kalau kumulatif kosong.
+  ulps.forEach(u=>{
+    tbody += `<tr><td rowspan="3">${u}</td><td class="label">TARGET</td>` + bulans.map(b=>{
+      const d = data.find(x=>x.ulp===u && x.bulan===b);
+      if(!d) return '<td>-</td>';
+      const v = d.tk!=null?d.tk:d.tb;
+      return `<td class="${susutTierClass(v)}">${v.toFixed(2)}%</td>`;
+    }).join('') + '</tr>';
+    tbody += `<tr><td class="label">REALISASI</td>` + bulans.map(b=>{
+      const d = data.find(x=>x.ulp===u && x.bulan===b);
+      if(!d || !d.rkFilled) return '<td>-</td>';
+      const v = d.rk!=null?d.rk:d.rb;
+      return `<td class="${susutTierClass(v)}">${v.toFixed(2)}%</td>`;
+    }).join('') + '</tr>';
+    tbody += `<tr><td class="label">% TARGET</td>` + bulans.map(b=>{
+      const d = data.find(x=>x.ulp===u && x.bulan===b);
+      if(!d || !d.rkFilled) return '<td>-</td>';
+      const v = d.rk!=null?d.rk:d.rb;
+      const t = d.tk!=null?d.tk:d.tb;
+      const ratio = v ? (t/v*100) : 0;
+      return `<td class="${achievementTierClass(ratio)}">${ratio.toFixed(2)}%</td>`;
+    }).join('') + '</tr>';
+  });
+  // UP3 total row — pakai baris "UP3 MADIUN" (berbobot) kalau tersedia, kalau tidak fallback rata-rata
+  tbody += `<tr class="up3-row"><td rowspan="3">UP3 MADIUN</td><td class="label" style="color:#cfe0f0;">TARGET</td>` + bulans.map(b=>{
+    const d3 = up3Data.find(d=>d.bulan===b);
+    let v;
+    if(d3){ v = d3.tk!=null?d3.tk:d3.tb; }
+    else{
+      const rowsB = data.filter(d=>d.bulan===b);
+      v = rowsB.reduce((s,d)=>s+(d.tk!=null?d.tk:d.tb),0)/rowsB.length;
+    }
+    return `<td class="${susutTierClass(v)}">${v.toFixed(2)}%</td>`;
+  }).join('') + '</tr>';
+  tbody += `<tr class="up3-row"><td class="label" style="color:#cfe0f0;">REALISASI</td>` + bulans.map(b=>{
+    const d3 = up3Data.find(d=>d.bulan===b);
+    if(d3){
+      if(!d3.rkFilled) return '<td>-</td>';
+      const v = d3.rk!=null?d3.rk:d3.rb;
+      return `<td class="${susutTierClass(v)}">${v.toFixed(2)}%</td>`;
+    }
+    const rowsB = data.filter(d=>d.bulan===b);
+    if(!rowsB.every(d=>d.rkFilled)) return '<td>-</td>';
+    const v = rowsB.reduce((s,d)=>s+(d.rk!=null?d.rk:d.rb),0)/rowsB.length;
+    return `<td class="${susutTierClass(v)}">${v.toFixed(2)}%</td>`;
+  }).join('') + '</tr>';
+  tbody += `<tr class="up3-row"><td class="label" style="color:#cfe0f0;">% TARGET</td>` + bulans.map(b=>{
+    const d3 = up3Data.find(d=>d.bulan===b);
+    let v, t;
+    if(d3){
+      if(!d3.rkFilled) return '<td>-</td>';
+      v = d3.rk!=null?d3.rk:d3.rb; t = d3.tk!=null?d3.tk:d3.tb;
+    } else {
+      const rowsB = data.filter(d=>d.bulan===b);
+      if(!rowsB.every(d=>d.rkFilled)) return '<td>-</td>';
+      v = rowsB.reduce((s,d)=>s+(d.rk!=null?d.rk:d.rb),0)/rowsB.length;
+      t = rowsB.reduce((s,d)=>s+(d.tk!=null?d.tk:d.tb),0)/rowsB.length;
+    }
+    const ratio = v ? (t/v*100) : 0;
+    return `<td class="${achievementTierClass(ratio)}">${ratio.toFixed(2)}%</td>`;
+  }).join('') + '</tr>';
+  tbody += '</tbody>';
+  document.getElementById('susut_matrix').innerHTML = thead + tbody;
+
+  document.getElementById('susut_insight').innerHTML = `
+    <li><b>${best.ulp}</b> jadi ULP dengan kinerja terbaik, realisasi ${best.rk.toFixed(2)}% vs target ${best.tk.toFixed(2)}% (${(best.tk-best.rk).toFixed(2)} poin di bawah target).</li>
+    <li>${diBawah.length} dari ${ulps.length} ULP sudah berada di bawah/sesuai target kumulatif s.d ${lastBulan}.</li>
+    ${trendDiff!=null && trendDiff<=0 ? `<li>Tren susut UP3 membaik ${Math.abs(trendDiff).toFixed(2)} poin dibanding bulan ${up3Prev.bulan}.</li>` : ''}`;
+
+  document.getElementById('susut_monitor').innerHTML = diAtas.length ? diAtas.map(d=>
+    `<li><b>${d.ulp}</b> di atas target ${(d.rk-d.tk).toFixed(2)} poin (realisasi ${d.rk.toFixed(2)}% vs target ${d.tk.toFixed(2)}%).</li>`
+  ).join('') : `<li>Tidak ada ULP yang berada di atas target bulan ini.</li>`;
+
+  document.getElementById('susut_reco').innerHTML = diAtas.length ? `
+    <li>Prioritaskan investigasi susut non-teknis di <b>${worst.ulp}</b> (gap terbesar, +${(worst.rk-worst.tk).toFixed(2)} poin).</li>
+    <li>Evaluasi P2TL &amp; akurasi meter di ULP yang di atas target sebelum akhir triwulan.</li>
+    <li>Replikasi praktik baik dari <b>${best.ulp}</b> ke ULP dengan gap terbesar.</li>` : `
+    <li>Pertahankan momentum — seluruh ULP sudah sesuai/di bawah target.</li>
+    <li>Lanjutkan monitoring bulanan agar tren tetap terjaga.</li>`;
+
+  showDash('susut');
+  setStatus('susut_status', true, 'Data berhasil dimuat (' + ulps.length + ' ULP, ' + bulans.length + ' bulan).');
+}
+async function susutLoad(){
+  const url = document.getElementById('susut_url').value.trim();
+  if(!url){ setStatus('susut_status', false, 'Masukkan link CSV terlebih dahulu.'); return; }
+  setStatus('susut_status', true, 'Memuat data...');
+  try{ susutRender(await fetchCSV(url)); } catch(e){ setStatus('susut_status', false, 'Gagal memuat: ' + e.message); }
+}
+function susutSample(){
+  const ulpData = {
+    'MANTINGAN': [12.13,12.34,12.31,11.80,12.30],
+    'MAGETAN':   [8.91,8.78,8.96,9.05,8.55],
+    'NGAWI':     [8.93,8.90,8.88,8.87,8.76],
+    'MAOSPATI':  [6.21,6.95,6.48,4.60,5.73],
+    'CARUBAN':   [6.86,6.26,6.61,5.99,5.87],
+    'DOLOPO':    [7.28,6.23,6.39,7.02,6.47],
+    'MADIUN KOTA':[0.77,3.14,4.38,5.22,5.67],
+  };
+  const targetData = {
+    'MANTINGAN': [12.35,12.34,12.31,12.30,12.30],
+    'MAGETAN':   [8.66,8.63,8.61,8.60,8.55],
+    'NGAWI':     [8.93,8.90,8.88,8.87,8.76],
+    'MAOSPATI':  [6.21,6.95,6.85,4.60,5.73],
+    'CARUBAN':   [6.06,6.00,6.15,5.99,5.87],
+    'DOLOPO':    [7.28,6.23,6.39,7.02,6.47],
+    'MADIUN KOTA':[5.86,5.83,5.80,6.70,5.67],
+  };
+  const bulans = ['JAN','FEB','MAR','APR','MEI'];
+  const cumTarget = {}, cumReal = {};
+  Object.keys(ulpData).forEach(u=>{ cumTarget[u]=0; cumReal[u]=0; });
+  const rows = [];
+  bulans.forEach((b,i)=>{
+    Object.keys(ulpData).forEach(u=>{
+      cumTarget[u]+=targetData[u][i]; cumReal[u]+=ulpData[u][i];
+      rows.push({ULP:u, Bulan:b, Target_Bulanan:targetData[u][i], Realisasi_Bulanan:ulpData[u][i],
+        Target_Kumulatif:(cumTarget[u]/(i+1)*1).toFixed(2), Realisasi_Kumulatif:(cumReal[u]/(i+1)*1).toFixed(2)});
+    });
+  });
+  susutRender(rows);
+}
+
+/* ================= TAB 2: KWH JUAL ================= */
+function kwhRender(rows){
+  const ulpKey = findKey(rows[0], ['ulp']);
+  const kodeKey = findKey(rows[0], ['kode','proses']);
+  const uKey = findKey(rows[0], ['unit']);
+  const pKey = findKey(rows[0], ['periode','bulan']);
+  const vKey = findKey(rows[0], ['kwh','jual','nilai']);
+  if((!ulpKey && !uKey)||!pKey||!vKey){ setStatus('kwh_status', false, 'Kolom ULP/Kode/Periode/KWh tidak ditemukan.'); return; }
+  const data = rows.map(r=>({
+    ulp: ulpKey ? String(r[ulpKey]||'').trim() : '',
+    kode: kodeKey ? String(r[kodeKey]||'').trim() : String(r[uKey]||'').trim(),
+    periode: r[pKey], kwh: num(r[vKey])
+  })).filter(d=>d.kode && d.periode);
+  const hasUlp = ulpKey && data.some(d=>d.ulp);
+
+  const periodsAll = [...new Set(data.map(d=>d.periode))].sort();
+  const periods = periodsAll.filter(p => data.filter(d=>d.periode===p).reduce((s,d)=>s+d.kwh,0) > 0);
+  if(!periods.length){ setStatus('kwh_status', false, 'Belum ada periode dengan data KWh_Jual terisi.'); return; }
+  const last = periods[periods.length-1], prev = periods[periods.length-2];
+  const totals = periods.map(p=>data.filter(d=>d.periode===p).reduce((s,d)=>s+d.kwh,0));
+  const totalLast = totals[totals.length-1] || 0;
+  const totalPrev = totals[totals.length-2] || 0;
+  const growthAbs = totalLast-totalPrev;
+  const growth = totalPrev ? (growthAbs/totalPrev*100) : 0;
+  const ulps = hasUlp ? [...new Set(data.map(d=>d.ulp))] : [];
+  const kodeUnits = [...new Set(data.map(d=>d.kode + (hasUlp?'|'+d.ulp:'')))];
+  const avgHarian = totalLast/30;
+
+  document.getElementById('kwh_title').textContent = `EVALUASI KWH JUAL UP3 MADIUN — ${last||''}`;
+  document.getElementById('kwh_sub').textContent = `Penjualan ${growth>=0?'meningkat':'menurun'} ${Math.abs(growth).toFixed(1)}% dibanding ${prev||'bulan sebelumnya'}`;
+
+  document.getElementById('kwh_kpi').innerHTML = `
+    <div class="icon-kpi"><div class="circle navy">📈</div><div><div class="ik-label">Realisasi ${last||''}</div><div class="ik-value">${(totalLast/1e6).toFixed(2)} <small>GWh</small></div></div></div>
+    <div class="icon-kpi"><div class="circle teal">📅</div><div><div class="ik-label">${prev||'Bulan lalu'}</div><div class="ik-value">${(totalPrev/1e6).toFixed(2)} <small>GWh</small></div></div></div>
+    <div class="icon-kpi"><div class="circle ${growth>=0?'green':'amber'}">${growth>=0?'⬆':'⬇'}</div><div><div class="ik-label">Growth</div><div class="ik-value">${growth>=0?'+':''}${growth.toFixed(1)}% <small>(${growthAbs>=0?'+':''}${(growthAbs/1e6).toFixed(2)} GWh)</small></div></div></div>
+    <div class="icon-kpi"><div class="circle amber">⏱</div><div><div class="ik-label">Rata-rata harian</div><div class="ik-value">${(avgHarian/1e6).toFixed(2)} <small>GWh/hari</small></div></div></div>
+    <div class="icon-kpi"><div class="circle purple">🏢</div><div><div class="ik-label">${hasUlp?'Jumlah ULP':'Jumlah kode proses'}</div><div class="ik-value">${(hasUlp?ulps.length:kodeUnits.length)} <small>${hasUlp?'ULP':'kode'}</small></div></div></div>`;
+
+  document.getElementById('kwh_th_prev').textContent = prev || 'Bln -1';
+  document.getElementById('kwh_th_last').textContent = last || 'Bln terakhir';
+
+  const perItem = kodeUnits.map(key=>{
+    const [kode, ulp] = hasUlp ? key.split('|') : [key, ''];
+    const rowsK = data.filter(d=>d.kode===kode && (!hasUlp || d.ulp===ulp));
+    const vPrev = rowsK.find(d=>d.periode===prev)?.kwh || 0;
+    const vLast = rowsK.find(d=>d.periode===last)?.kwh || 0;
+    return {ulp, kode, vPrev, vLast, diff: vLast-vPrev};
+  });
+
+  const sorted = hasUlp ? [...perItem].sort((a,b)=> a.ulp.localeCompare(b.ulp) || a.kode.localeCompare(b.kode)) : perItem;
+  let lastUlpSeen = null;
+  document.getElementById('kwh_table').innerHTML = sorted.map(d=>{
+    const g = d.vPrev ? (d.diff/d.vPrev*100) : 0;
+    const showUlp = hasUlp && d.ulp !== lastUlpSeen;
+    lastUlpSeen = d.ulp;
+    return `<tr><td style="font-weight:${showUlp?800:400};color:${showUlp?'var(--navy)':'var(--muted)'};">${showUlp?d.ulp:''}</td><td>${d.kode}</td><td>${d.vPrev.toLocaleString('id-ID')}</td><td>${d.vLast.toLocaleString('id-ID')}</td><td><span class="pill ${g>=0?'good':'bad'}">${g>=0?'+':''}${g.toFixed(2)}%</span></td></tr>`;
+  }).join('');
+
+  const contribGroup = hasUlp
+    ? ulps.map(u=>{
+        const rowsU = data.filter(d=>d.ulp===u);
+        const vP = rowsU.filter(d=>d.periode===prev).reduce((s,d)=>s+d.kwh,0);
+        const vL = rowsU.filter(d=>d.periode===last).reduce((s,d)=>s+d.kwh,0);
+        return {label:u, diff:vL-vP};
+      })
+    : perItem.map(d=>({label:d.kode, diff:d.diff}));
+  const top3 = [...contribGroup].sort((a,b)=>b.diff-a.diff).slice(0,3);
+  document.getElementById('kwh_podium').innerHTML = top3.map((d,i)=>`
+    <div class="podium-item"><div class="podium-rank r${i+1}">${i+1}</div><div class="podium-name">${d.label}</div><div class="podium-val">${d.diff>=0?'+':''}${(d.diff/1e6).toFixed(2)} GWh</div></div>`).join('');
+
+  destroyChart('kwh_chart');
+  charts['kwh_chart'] = new Chart(document.getElementById('kwh_chart'), {
+    type:'bar', data:{ labels:periods, datasets:[{label:'Total kWh jual (GWh)', data:totals.map(v=>v/1e6), backgroundColor:periods.map((p,i)=>i===periods.length-1?'#0d2a4a':'#9fc4e8'), borderRadius:5, maxBarThickness:60}] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}} }
+  });
+
+  document.getElementById('kwh_insight').innerHTML = `
+    <div class="ki-point"><b>Tren ${growth>=0?'positif':'negatif'}:</b> Energi siap jual ${growth>=0?'mencapai':'turun ke'} ${(totalLast/1e6).toFixed(2)} GWh, ${growth>=0?'meningkat':'menurun'} ${Math.abs(growth).toFixed(1)}% dibanding ${prev||'bulan sebelumnya'}.</div>
+    <div class="ki-point"><b>Kontributor utama:</b> ${top3.map(d=>d.label).join(', ')} menjadi kontributor pertumbuhan terbesar bulan ini.</div>
+    <div class="ki-point"><b>Cakupan data:</b> ${hasUlp?`${ulps.length} ULP dengan total ${kodeUnits.length} baris kode proses billing`:`${kodeUnits.length} kode proses billing`} tercatat pada periode ${last||''}.</div>
+    <div class="ki-point"><b>Tindak lanjut:</b> Evaluasi lebih lanjut pada ULP/kode proses yang mengalami penurunan untuk penguatan kualitas billing.</div>`;
+
+  showDash('kwh');
+  setStatus('kwh_status', true, 'Data berhasil dimuat (' + (hasUlp?ulps.length+' ULP, ':'') + kodeUnits.length + ' kode proses).');
+}
+async function kwhLoad(){
+  const url = document.getElementById('kwh_url').value.trim();
+  if(!url){ setStatus('kwh_status', false, 'Masukkan link CSV terlebih dahulu.'); return; }
+  setStatus('kwh_status', true, 'Memuat data...');
+  try{ kwhRender(await fetchCSV(url)); } catch(e){ setStatus('kwh_status', false, 'Gagal memuat: ' + e.message); }
+}
+function kwhSample(){
+  kwhRender([
+    {ULP:'MADIUN KOTA', Kode:'51MDNAI-TM', Periode:'2026-04', KWh_Jual:'5366934'},
+    {ULP:'MADIUN KOTA', Kode:'51MDNAI-TM', Periode:'2026-05', KWh_Jual:'5591527'},
+    {ULP:'MADIUN KOTA', Kode:'51MDNAR', Periode:'2026-04', KWh_Jual:'2894845'},
+    {ULP:'MADIUN KOTA', Kode:'51MDNAR', Periode:'2026-05', KWh_Jual:'3035297'},
+    {ULP:'MADIUN KOTA', Kode:'51MDNBA', Periode:'2026-04', KWh_Jual:'4691024'},
+    {ULP:'MADIUN KOTA', Kode:'51MDNBA', Periode:'2026-05', KWh_Jual:'4973431'},
+    {ULP:'MAGETAN', Kode:'51MDNAR', Periode:'2026-04', KWh_Jual:'1271288'},
+    {ULP:'MAGETAN', Kode:'51MDNAR', Periode:'2026-05', KWh_Jual:'1334962'},
+    {ULP:'MAGETAN', Kode:'51MDNBA', Periode:'2026-04', KWh_Jual:'5276267'},
+    {ULP:'MAGETAN', Kode:'51MDNBA', Periode:'2026-05', KWh_Jual:'5501676'},
+  ]);
+}
+
+/* ---- komponen kWh jual: PAL prognosa, realisasi P2TL, prabayar ---- */
+function compRender(rows){
+  const pKey = findKey(rows[0], ['periode','bulan']);
+  const palKey = findKey(rows[0], ['pal']);
+  const p2tlKey = findKey(rows[0], ['p2tl']);
+  const praKey = findKey(rows[0], ['prabayar']);
+  if(!pKey||!palKey||!p2tlKey||!praKey){ setStatus('comp_status', false, 'Kolom Periode/PAL_Prognosa/Realisasi_P2TL/Prabayar tidak ditemukan.'); return; }
+  const data = rows.map(r=>({periode:r[pKey], pal:num(r[palKey]), p2tl:num(r[p2tlKey]), prabayar:num(r[praKey])})).filter(d=>d.periode);
+  const filled = data.filter(d => (d.pal + d.p2tl + d.prabayar) > 0);
+  if(!filled.length){ setStatus('comp_status', false, 'Belum ada periode dengan data komponen terisi.'); return; }
+  const last = filled[filled.length-1];
+  const total = last.pal + last.p2tl + last.prabayar;
+  // Label "(Prognosa)" hanya relevan untuk bulan yang SEDANG berjalan (belum selesai).
+  // Untuk bulan yang sudah lewat, datanya sudah final/realisasi — jadi label ini dihapus
+  // supaya tidak menyesatkan (mis. "PAL (Prognosa) 2026-06" padahal sekarang sudah Juli).
+  const now = new Date();
+  const currentYYYYMM = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
+  const isRunningMonth = last.periode === currentYYYYMM;
+  const palLabel = isRunningMonth ? 'PAL (Prognosa)' : 'PAL';
+  document.getElementById('comp_kpi').innerHTML = `
+    <div class="icon-kpi"><div class="circle navy">🏗</div><div><div class="ik-label">${palLabel} ${last.periode}</div><div class="ik-value">${(last.pal/1e6).toFixed(2)} <small>GWh</small></div></div></div>
+    <div class="icon-kpi"><div class="circle red">🔍</div><div><div class="ik-label">Realisasi P2TL ${last.periode}</div><div class="ik-value">${(last.p2tl/1e6).toFixed(2)} <small>GWh</small></div></div></div>
+    <div class="icon-kpi"><div class="circle purple">💳</div><div><div class="ik-label">Prabayar ${last.periode}</div><div class="ik-value">${(last.prabayar/1e6).toFixed(2)} <small>GWh</small></div></div></div>
+    <div class="icon-kpi"><div class="circle green">Σ</div><div><div class="ik-label">Total komponen</div><div class="ik-value">${(total/1e6).toFixed(2)} <small>GWh</small></div></div></div>`;
+  destroyChart('comp_chart');
+  charts['comp_chart'] = new Chart(document.getElementById('comp_chart'), {
+    type:'bar', data:{ labels:data.map(d=>d.periode), datasets:[
+      {label:'PAL', data:data.map(d=>d.pal/1e6), backgroundColor:'#0d2a4a', stack:'s', borderRadius:3},
+      {label:'Realisasi P2TL', data:data.map(d=>d.p2tl/1e6), backgroundColor:'#d23b3b', stack:'s', borderRadius:3},
+      {label:'Prabayar', data:data.map(d=>d.prabayar/1e6), backgroundColor:'#7a4ec9', stack:'s', borderRadius:3}]},
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom', labels:{boxWidth:10, font:{size:11}}}}, scales:{x:{stacked:true}, y:{stacked:true, title:{display:true,text:'GWh'}}} }
+  });
+  document.getElementById('comp_dash').style.display='block';
+  document.getElementById('comp_empty').style.display='none';
+  setStatus('comp_status', true, 'Data komponen berhasil dimuat.');
+}
+async function compLoad(){
+  const url = document.getElementById('comp_url').value.trim();
+  if(!url){ setStatus('comp_status', false, 'Masukkan link CSV terlebih dahulu.'); return; }
+  setStatus('comp_status', true, 'Memuat data...');
+  try{ compRender(await fetchCSV(url)); } catch(e){ setStatus('comp_status', false, 'Gagal memuat: ' + e.message); }
+}
+function compSample(){
+  compRender([
+    {Periode:'2026-03', PAL_Prognosa:'22020862', Realisasi_P2TL:'1428322', Prabayar:'55570000'},
+    {Periode:'2026-04', PAL_Prognosa:'22829039', Realisasi_P2TL:'2201881', Prabayar:'55570000'},
+    {Periode:'2026-05', PAL_Prognosa:'21833204', Realisasi_P2TL:'3387225', Prabayar:'63830000'},
+  ]);
+}
+
+/* ================= TAB 3: PRABAYAR ================= */
+let praData = [];
+function praRender(rows){
+  const ulpKey = findKey(rows[0], ['ulp','unit']);
+  const pKey = findKey(rows[0], ['periode','bulan']);
+  const gKey = findKey(rows[0], ['gwh']);
+  if(!ulpKey||!pKey||!gKey){ setStatus('pra_status', false, 'Kolom ULP/Periode/GWh tidak ditemukan.'); return; }
+  praData = rows.map(r=>({ulp:r[ulpKey], periode:r[pKey], gwh:num(r[gKey])})).filter(d=>d.ulp&&d.periode);
+  praRecalcManual();
+  setStatus('pra_status', true, 'Data berhasil dimuat.');
+}
+function praRecalcManual(){
+  if(!praData.length) return;
+  const periodsAll = [...new Set(praData.map(d=>d.periode))].sort();
+  const periods = periodsAll.filter(p => praData.filter(d=>d.periode===p).reduce((s,d)=>s+d.gwh,0) > 0);
+  if(!periods.length) return;
+  const last = periods[periods.length-1], prev = periods[periods.length-2];
+  const totals = periods.map(p=>praData.filter(d=>d.periode===p).reduce((s,d)=>s+d.gwh,0));
+  const totalLast = totals[totals.length-1] || 0;
+  const totalPrev = totals[totals.length-2] || 0;
+  const growthAbs = totalLast-totalPrev;
+  const growth = totalPrev ? (growthAbs/totalPrev*100) : 0;
+  const avgHarian = totalLast/30;
+  const komposisi = num(document.getElementById('pra_komposisi').value);
+  const pctAwal = num(document.getElementById('pra_pct_awal').value);
+
+  document.getElementById('pra_title').textContent = `KINERJA PENJUALAN KWH PRABAYAR ${last||''}`;
+  document.getElementById('pra_sub').textContent = `Penjualan ${growth>=0?'meningkat':'menurun'} ${Math.abs(growth).toFixed(1)}% dibanding ${prev||'bulan sebelumnya'}`;
+
+  document.getElementById('pra_kpi').innerHTML = `
+    <div class="icon-kpi"><div class="circle navy">📈</div><div><div class="ik-label">Realisasi ${last||''}</div><div class="ik-value">${totalLast.toFixed(2)} <small>GWh</small></div></div></div>
+    <div class="icon-kpi"><div class="circle teal">📅</div><div><div class="ik-label">${prev||'Bulan lalu'}</div><div class="ik-value">${totalPrev.toFixed(2)} <small>GWh</small></div></div></div>
+    <div class="icon-kpi"><div class="circle ${growth>=0?'green':'amber'}">${growth>=0?'⬆':'⬇'}</div><div><div class="ik-label">Growth</div><div class="ik-value">${growth>=0?'+':''}${growth.toFixed(1)}% <small>(${growthAbs>=0?'+':''}${growthAbs.toFixed(2)} GWh)</small></div></div></div>
+    <div class="icon-kpi"><div class="circle amber">⏱</div><div><div class="ik-label">Rata-rata harian</div><div class="ik-value">${avgHarian.toFixed(2)} <small>GWh/hari</small></div></div></div>
+    <div class="icon-kpi"><div class="circle purple">👥</div><div><div class="ik-label">Komposisi prabayar</div><div class="ik-value">${komposisi.toFixed(2)}<small>%</small></div></div></div>`;
+
+  const perUlp = [...new Set(praData.map(d=>d.ulp))].map(u=>{
+    const vPrev = praData.find(d=>d.ulp===u && d.periode===prev)?.gwh || 0;
+    const vLast = praData.find(d=>d.ulp===u && d.periode===last)?.gwh || 0;
+    return {ulp:u, diff:vLast-vPrev};
+  });
+  const top3 = [...perUlp].sort((a,b)=>b.diff-a.diff).slice(0,3);
+  document.getElementById('pra_podium').innerHTML = top3.map((d,i)=>`
+    <div class="podium-item"><div class="podium-rank r${i+1}">${i+1}</div><div class="podium-name">ULP ${d.ulp}</div><div class="podium-val">${d.diff>=0?'+':''}${d.diff.toFixed(2)} GWh</div></div>`).join('');
+
+  document.getElementById('pra_pattern').innerHTML = `
+    <div style="font-size:12.5px;line-height:1.7;">
+      <div>Realisasi s.d tanggal 20 &mdash; <b>${(totalLast*pctAwal/100).toFixed(2)} GWh (${pctAwal}%)</b> dari total bulan ini</div>
+      <div>Realisasi tgl 21&ndash;akhir bulan &mdash; <b>${(totalLast*(100-pctAwal)/100).toFixed(2)} GWh (${(100-pctAwal).toFixed(0)}%)</b></div>
+      <div style="margin-top:8px;padding:10px;background:var(--blue-bg);border-radius:8px;">Indikasi: pelanggan cenderung membeli token lebih banyak di akhir bulan sebagai antisipasi kebutuhan listrik.</div>
+    </div>`;
+
+  document.getElementById('pra_table').innerHTML = periods.map((p,i)=>{
+    const g = i>0 && totals[i-1] ? ((totals[i]-totals[i-1])/totals[i-1]*100) : null;
+    return `<tr><td>${p}</td><td>${totals[i].toFixed(2)}</td><td>${g==null?'-':`<span class="pill ${g>=0?'good':'bad'}">${g>=0?'+':''}${g.toFixed(1)}%</span>`}</td></tr>`;
+  }).join('');
+
+  destroyChart('pra_chart');
+  charts['pra_chart'] = new Chart(document.getElementById('pra_chart'), {
+    type:'bar', data:{ labels:periods, datasets:[{label:'GWh', data:totals, backgroundColor:periods.map((p,i)=>i===periods.length-1?'#0d2a4a':'#7fc4c4'), borderRadius:5, maxBarThickness:70}] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}} }
+  });
+
+  document.getElementById('pra_insight').innerHTML = `
+    <div class="ki-point">Penjualan kWh Prabayar ${last||''} <b>${growth>=0?'meningkat':'menurun'} ${Math.abs(growth).toFixed(1)}%</b> dibanding ${prev||'bulan sebelumnya'}, atau ${growth>=0?'naik':'turun'} sebesar ${Math.abs(growthAbs).toFixed(2)} GWh.</div>
+    <div class="ki-point">Kontributor pertumbuhan terbesar berasal dari ULP <b>${top3.map(d=>d.ulp).join(', ')}</b>.</div>
+    <div class="ki-point">Pelanggan cenderung membeli token dalam jumlah lebih besar pada akhir bulan (tgl 20 ke atas) sebagai antisipasi.</div>
+    <div class="ki-point">Komposisi pelanggan prabayar saat ini <b>${komposisi.toFixed(2)}%</b> dari total pelanggan.</div>`;
+
+  showDash('pra');
+}
+async function praLoad(){
+  const url = document.getElementById('pra_url').value.trim();
+  if(!url){ setStatus('pra_status', false, 'Masukkan link CSV terlebih dahulu.'); return; }
+  setStatus('pra_status', true, 'Memuat data...');
+  try{ praRender(await fetchCSV(url)); } catch(e){ setStatus('pra_status', false, 'Gagal memuat: ' + e.message); }
+}
+function praSample(){
+  praRender([
+    {ULP:'NGAWI', Periode:'APR-26', GWh_Prabayar:'13.10'},
+    {ULP:'NGAWI', Periode:'MEI-26', GWh_Prabayar:'15.37'},
+    {ULP:'CARUBAN', Periode:'APR-26', GWh_Prabayar:'10.20'},
+    {ULP:'CARUBAN', Periode:'MEI-26', GWh_Prabayar:'11.42'},
+    {ULP:'MADIUN KOTA', Periode:'APR-26', GWh_Prabayar:'9.80'},
+    {ULP:'MADIUN KOTA', Periode:'MEI-26', GWh_Prabayar:'10.90'},
+    {ULP:'MAGETAN', Periode:'APR-26', GWh_Prabayar:'8.50'},
+    {ULP:'MAGETAN', Periode:'MEI-26', GWh_Prabayar:'9.30'},
+    {ULP:'MAOSPATI', Periode:'APR-26', GWh_Prabayar:'7.30'},
+    {ULP:'MAOSPATI', Periode:'MEI-26', GWh_Prabayar:'8.10'},
+    {ULP:'DOLOPO', Periode:'APR-26', GWh_Prabayar:'6.67'},
+    {ULP:'DOLOPO', Periode:'MEI-26', GWh_Prabayar:'8.74'},
+  ]);
+}
 
 /* ================= TAB 4: P2TL ================= */
 let p2tlData = [];
-
-// FUNGSI YANG DIUBAH SESUAI PERMINTAAN USER[cite: 1]
 function p2tlRender(rows){
   const bKey = findKey(rows[0], ['bulan']);
-  if(!bKey){ 
-    setStatus('p2tl_status', false, 'Kolom Bulan tidak ditemukan.'); 
-    return; 
-  }
+  if(!bKey){ setStatus('p2tl_status', false, 'Kolom Bulan tidak ditemukan.'); return; }
+  // PENTING: nama header kolom kumulatif di sheet sumber terbukti tidak selalu bisa
+  // ditebak lewat nama (dua kali salah tangkap sebelumnya) — jadi sekarang diambil
+  // berdasarkan POSISI kolom setelah Bulan, sesuai konfirmasi user:
+  // Bulan, [D] Target_Bulanan, [E] Realisasi_Bulanan, [F] Target_Kumulatif, [G] Realisasi_Kumulatif.
   const keys = Object.keys(rows[0]);
   const bIdx = keys.indexOf(bKey);
-  
-  // Ambil kolom target dan realisasi berdasarkan posisi setelah kolom Bulan
   const tbKey = keys[bIdx+1], rbKey = keys[bIdx+2], tkKey = keys[bIdx+3], rkKey = keys[bIdx+4];
-  
-  if(!tbKey || !rbKey || !tkKey || !rkKey){
-    setStatus('p2tl_status', false, 'Kolom setelah "Bulan" kurang dari 4 (Target_Kumulatif, Realisasi_Kumulatif). Cek urutan kolom CSV.');
+  if(!tbKey||!rbKey||!tkKey||!rkKey){
+    setStatus('p2tl_status', false, 'Kolom setelah "Bulan" kurang dari 4 (Target_Bulanan, Realisasi_Bulanan, Target_Kumulatif, Realisasi_Kumulatif). Cek urutan kolom CSV.');
     return;
   }
-
-  // Ambil data dari posisi target dan realisasi yang baru
   p2tlData = rows.map(r=>({
-    bulan: r[bKey],
-    tb: num(r[tbKey]),
-    rb: num(r[rbKey]),
-    cumT: num(r[tkKey]),
-    cumR: num(r[rkKey]),
-    realisasiFilled: num(r[rkKey]) > 0 || num(r[rbKey]) > 0
+    bulan:r[bKey],
+    tb:num(r[tbKey]), rb:num(r[rbKey]),
+    cumT:num(r[tkKey]), cumR:num(r[rkKey]),
+    realisasiFilled: num(r[rkKey])>0 || num(r[rbKey])>0
   })).filter(d=>d.bulan);
-
   p2tlRecalc();
-
   setStatus('p2tl_status', true, 'Data berhasil dimuat (kolom diambil dari posisi setelah Bulan: '+tbKey+', '+rbKey+', '+tkKey+', '+rkKey+').');
 }
-
+// ---- Pemetaan nama bulan Indonesia (penuh & singkatan) ke indeks 0-11, dipakai untuk
+// mencocokkan baris data P2TL dengan bulan kalender YANG SEDANG BERJALAN saat ini
+// (bukan sekadar baris terakhir yang kebetulan punya nilai kumulatif > 0).
 const INDO_BULAN_FULL = ["JANUARI","FEBRUARI","MARET","APRIL","MEI","JUNI","JULI","AGUSTUS","SEPTEMBER","OKTOBER","NOVEMBER","DESEMBER"];
 const INDO_BULAN_ABBR = ["JAN","FEB","MAR","APR","MEI","JUN","JUL","AGU","SEP","OKT","NOV","DES"];
 function indoMonthIndex(name){
   const n = String(name||'').trim().toUpperCase();
   let idx = INDO_BULAN_FULL.indexOf(n);
   if(idx === -1) idx = INDO_BULAN_ABBR.indexOf(n.slice(0,3));
-  return idx;
+  return idx; // -1 kalau tidak dikenali
 }
-
 function p2tlRecalc(){
   if(!p2tlData.length) return;
-  const rows = p2tlData;
+  const rows = p2tlData; // cumT & cumR sudah kumulatif langsung dari sumber, tidak di-SUM lagi di sini
   const first = rows[0];
 
-  const currentMonthIdx = new Date().getMonth();
+  // ---- Tentukan "bulan berjalan" berdasarkan bulan KALENDER SAAT INI (bukan baris
+  // terakhir di tabel). Ini mencegah kartu KPI menampilkan bulan yang belum berjalan
+  // (mis. Desember) hanya karena baris itu punya nilai kumulatif carry-over > 0. ----
+  const currentMonthIdx = new Date().getMonth(); // 0 = Januari ... 11 = Desember
   let last = rows.find(r => indoMonthIndex(r.bulan) === currentMonthIdx);
   if(!last){
+    // Fallback: bulan berjalan belum ada di data yang dimuat -> pakai baris terakhir
+    // yang realisasi bulanannya benar-benar terisi (rb > 0), baru fallback ke baris terakhir.
     const rowsWithReal = rows.filter(r=>r.rb>0);
     last = rowsWithReal.length ? rowsWithReal[rowsWithReal.length-1] : (rows.filter(r=>r.realisasiFilled).slice(-1)[0] || rows[rows.length-1]);
   }
-  
-  // ... Sisa fungsi p2tlRecalc dan fungsi tab lainnya tetap dipertahankan ...
+  const gap = last.cumT - last.cumR;
+  const gapPct = last.cumT ? (gap/last.cumT*100) : 0;
+  const capaian = last.cumT ? (last.cumR/last.cumT*100) : 0;
+
+  // ---- Gap & capaian BULANAN (realisasi bulan berjalan vs target bulanan) ----
+  const gapBulanan = last.tb - last.rb;
+  const gapBulananPct = last.tb ? (gapBulanan/last.tb*100) : 0;
+  const pctBulanan = last.tb ? (last.rb/last.tb*100) : 0;
+
+  // ---- 4 poin ringkasan bulan berjalan (data ter-link real-time ke sumber, sumber
+  // diperbarui setiap 1 jam sehingga angka berikut mengikuti update sumber terakhir) ----
+  const now = new Date();
+  const tglJam = now.toLocaleDateString('id-ID', {day:'2-digit', month:'long', year:'numeric'}) + ', pukul ' + now.toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'}) + ' WIB';
+  document.getElementById('p2tl_live_caption').innerHTML = `📡 Ringkasan bulan berjalan (${last.bulan}) &mdash; data diperbarui ${tglJam}, mengikuti sumber yang ter-link langsung dan diperbarui setiap 1 jam.`;
+  document.getElementById('p2tl_live_points').innerHTML = `
+    <div><div style="font-size:10.5px;opacity:.75;text-transform:uppercase;letter-spacing:.3px;">Realisasi bulan (${last.bulan})</div><div style="font-size:19px;font-weight:800;">${last.rb.toLocaleString('id-ID')} kWh</div></div>
+    <div><div style="font-size:10.5px;opacity:.75;text-transform:uppercase;letter-spacing:.3px;">Target bulanan (${last.bulan})</div><div style="font-size:19px;font-weight:800;">${last.tb.toLocaleString('id-ID')} kWh</div></div>
+    <div><div style="font-size:10.5px;opacity:.75;text-transform:uppercase;letter-spacing:.3px;">Realisasi s.d ${last.bulan}</div><div style="font-size:19px;font-weight:800;">${last.cumR.toLocaleString('id-ID')} kWh</div></div>
+    <div><div style="font-size:10.5px;opacity:.75;text-transform:uppercase;letter-spacing:.3px;">Target kumulatif s.d ${last.bulan}</div><div style="font-size:19px;font-weight:800;">${last.cumT.toLocaleString('id-ID')} kWh</div></div>`;
+  const reguTad = num(document.getElementById('p2tl_regu_tad').value);
+  const reguMandiri = num(document.getElementById('p2tl_regu_mandiri').value);
+  const ts = num(document.getElementById('p2tl_ts').value);
+  const cost = num(document.getElementById('p2tl_cost').value);
+  const bcr = cost ? ts/cost : 0;
+  const net = ts - cost;
+  const totalRegu = reguTad+reguMandiri;
+  const produktivitas = totalRegu ? (last.cumR/totalRegu) : 0;
+  const periodeLabel = `PERIODE ${first.bulan.toUpperCase()} &ndash; ${last.bulan.toUpperCase()} 2026`;
+  document.getElementById('p2tl_period').innerHTML = periodeLabel;
+  last.capaian = capaian; // dipakai lagi di bawah
+
+  document.getElementById('p2tl_side').innerHTML = `
+    <div class="exec-side-item"><div class="lbl">Jumlah regu P2TL TAD</div><div class="val">${reguTad} Regu</div></div>
+    <div class="exec-side-item"><div class="lbl">Jumlah regu P2TL Mandiri</div><div class="val">${reguMandiri} Regu</div></div>
+    <div class="exec-side-item"><div class="lbl">Total regu operasional</div><div class="val">${totalRegu} Regu</div></div>
+    <div class="exec-side-item"><div class="lbl">Realisasi bulan berjalan (${last.bulan})</div><div class="val">${last.rb.toLocaleString('id-ID')} kWh</div></div>
+    <div class="exec-side-item"><div class="lbl">Target kumulatif s.d ${last.bulan}</div><div class="val">${last.cumT.toLocaleString('id-ID')} kWh</div></div>
+    <div class="exec-side-item"><div class="lbl">Realisasi kumulatif</div><div class="val">${last.cumR.toLocaleString('id-ID')} kWh</div></div>
+    <div class="exec-side-item"><div class="lbl">Persentase capaian</div><div class="val">${capaian.toFixed(2)}%</div></div>
+    <div class="exec-side-item"><div class="lbl">Total TS (benefit)</div><div class="val">Rp${(ts/1e9).toFixed(2)} M</div></div>
+    <div class="exec-side-item"><div class="lbl">Total biaya P2TL (cost)</div><div class="val">Rp${(cost/1e9).toFixed(2)} M</div></div>
+    <div class="exec-side-item"><div class="lbl">Net benefit</div><div class="val">Rp${(net/1e6).toFixed(2)} Jt</div></div>
+    <div class="exec-side-item"><div class="lbl">Benefit cost ratio</div><div class="val">${bcr.toFixed(2)}</div></div>`;
+
+  document.getElementById('p2tl_kpi').innerHTML = `
+    <div class="kpi-card ${pctBulanan>=100?'green':'amber'}"><div class="kpi-label">Realisasi bulan berjalan (${last.bulan})</div><div class="kpi-value">${last.rb.toLocaleString('id-ID')} kWh</div><div class="kpi-sub">${pctBulanan.toFixed(1)}% dari target bulanan &middot; s.d hari ini</div></div>
+    <div class="kpi-card"><div class="kpi-label">Target bulanan (${last.bulan})</div><div class="kpi-value">${last.tb.toLocaleString('id-ID')} kWh</div></div>
+    <div class="kpi-card ${gapBulanan>0?'amber':'green'}"><div class="kpi-label">Gap bulan berjalan vs target</div><div class="kpi-value">${gapBulanan.toLocaleString('id-ID')} kWh</div><div class="kpi-sub">${gapBulanan>0?'▼':'▲'} ${Math.abs(gapBulananPct).toFixed(2)}% ${gapBulanan>0?'belum tercapai':'melebihi target bulanan'}</div></div>
+    <div class="kpi-card ${pctBulanan>=100?'green':'amber'}"><div class="kpi-label">% realisasi bulanan</div><div class="kpi-value">${pctBulanan.toFixed(2)}%</div><div class="kpi-sub">terhadap target bulan ${last.bulan}</div></div>
+    <div class="kpi-card"><div class="kpi-label">Realisasi energi kumulatif</div><div class="kpi-value">${last.cumR.toLocaleString('id-ID')} kWh</div><div class="kpi-sub">${capaian.toFixed(2)}% vs target kumulatif</div></div>
+    <div class="kpi-card green"><div class="kpi-label">Target kumulatif s.d ${last.bulan}</div><div class="kpi-value">${last.cumT.toLocaleString('id-ID')} kWh</div></div>
+    <div class="kpi-card purple"><div class="kpi-label">Gap terhadap target</div><div class="kpi-value">${gap.toLocaleString('id-ID')} kWh</div><div class="kpi-sub">${gap>0?'▼':'▲'} ${Math.abs(gapPct).toFixed(2)}% ${gap>0?'belum tercapai':'melebihi target'}</div></div>
+    <div class="kpi-card amber"><div class="kpi-label">Total TS (benefit)</div><div class="kpi-value">Rp${(ts/1e9).toFixed(2)} M</div></div>
+    <div class="kpi-card ${bcr>=1?'green':'red'}"><div class="kpi-label">Benefit cost ratio (BCR)</div><div class="kpi-value">${bcr.toFixed(2)}</div><div class="kpi-sub">Setiap Rp1 biaya menghasilkan Rp${bcr.toFixed(2)} manfaat</div></div>
+    <div class="kpi-card ${net>=0?'green':'red'}"><div class="kpi-label">Net benefit</div><div class="kpi-value">Rp${(net/1e6).toFixed(2)} Jt</div></div>`;
+
+  if(ulpContribData.length) p2tlUlpRecalc();
+
+  destroyChart('p2tl_donut');
+  charts['p2tl_donut'] = new Chart(document.getElementById('p2tl_donut'), {
+    type:'doughnut',
+    data:{ labels:['Realisasi','Gap target'], datasets:[{ data:[last.cumR, Math.max(gap,0)], backgroundColor:['#1f6fc6','#1c8a4a'], borderWidth:0 }] },
+    options:{ responsive:true, maintainAspectRatio:false, cutout:'68%', plugins:{ legend:{ position:'bottom', labels:{boxWidth:10, font:{size:11}} } } }
+  });
+  document.getElementById('p2tl_donut_caption').innerHTML = `Realisasi mencapai <b>${capaian.toFixed(2)}%</b> dari target kumulatif s.d ${last.bulan} ${gap>0?`&mdash; terdapat gap ${gap.toLocaleString('id-ID')} kWh untuk mencapai target kumulatif.`:'&mdash; target kumulatif sudah terlampaui.'}`;
+
+  document.getElementById('p2tl_finance').innerHTML = `
+    <table class="fin-table">
+      <tr><td>Total TS (Benefit)</td><td>Rp${ts.toLocaleString('id-ID')}</td></tr>
+      <tr><td>Total biaya P2TL (Cost)</td><td>Rp${cost.toLocaleString('id-ID')}</td></tr>
+      <tr><td>Net benefit</td><td>Rp${net.toLocaleString('id-ID')}</td></tr>
+      <tr><td>Benefit cost ratio (BCR)</td><td>${bcr.toFixed(2)}</td></tr>
+    </table>
+    <div class="fin-box">Setiap Rp1,00 biaya P2TL menghasilkan manfaat sebesar <span class="big">Rp${bcr.toFixed(2)}</span>. Program P2TL ${bcr>=1?'layak dan memberikan keuntungan ekonomi positif':'belum mencapai titik impas, perlu efisiensi biaya'}.</div>`;
+
+  document.getElementById('p2tl_insight').innerHTML = `
+    <li>Realisasi energi mencapai ${(last.cumR/1e6).toFixed(2)} GWh atau ${capaian.toFixed(2)}% dari target kumulatif s.d ${last.bulan} 2026.</li>
+    <li>Didukung oleh ${totalRegu} regu operasional (${reguTad} regu TAD dan ${reguMandiri} regu Mandiri).</li>
+    <li>Total TS sebesar Rp${(ts/1e9).toFixed(2)} miliar memberikan kontribusi terhadap pemulihan potensi kehilangan energi.</li>
+    <li>Net benefit sebesar Rp${(net/1e6).toFixed(2)} juta dengan BCR ${bcr.toFixed(2)}.</li>
+    <li>Produktivitas rata-rata ${Math.round(produktivitas).toLocaleString('id-ID')} kWh per regu.</li>`;
+  document.getElementById('p2tl_monitor').innerHTML = `
+    <li>${gap>0?`Masih terdapat gap target sebesar ${gap.toLocaleString('id-ID')} kWh.`:'Target kumulatif sudah tercapai, jaga konsistensi capaian.'}</li>
+    <li>Capaian kumulatif ${capaian>=100?'sudah memenuhi':'masih di bawah'} target (${capaian.toFixed(2)}%).</li>
+    <li>Evaluasi produktivitas per regu dan per wilayah untuk mengidentifikasi potensi peningkatan terbesar.</li>
+    <li>Pengendalian biaya operasional agar BCR tetap di atas 1.</li>`;
+  document.getElementById('p2tl_rekom').innerHTML = `
+    <li>Fokuskan kegiatan P2TL pada pelanggan berpotensi tinggi.</li>
+    <li>Optimalkan penugasan ${reguTad} regu TAD dan ${reguMandiri} regu Mandiri.</li>
+    <li>Monitoring mingguan capaian kWh dan TS untuk percepatan target.</li>
+    <li>Pertahankan efisiensi biaya agar BCR tetap &gt; 1.</li>`;
+
+  showDash('p2tl');
 }
+async function p2tlLoad(){
+  const url = document.getElementById('p2tl_url').value.trim();
+  if(!url){ setStatus('p2tl_status', false, 'Masukkan link CSV terlebih dahulu.'); return; }
+  setStatus('p2tl_status', true, 'Memuat data...');
+  try{ p2tlRender(await fetchCSV(url)); } catch(e){ setStatus('p2tl_status', false, 'Gagal memuat: ' + e.message); }
+}
+function p2tlSample(){
+  // Contoh 5 kolom sesuai urutan sheet sumber: Bulan, Target_Bulanan, Realisasi_Bulanan,
+  // Target_Kumulatif, Realisasi_Kumulatif (kumulatif = akumulasi bulanan, sudah dihitung di sumber).
+  p2tlRender([
+    {Bulan:'JANUARI', Target_Bulanan:'892857', Realisasi_Bulanan:'459652', Target_Kumulatif:'892857', Realisasi_Kumulatif:'459652'},
+    {Bulan:'FEBRUARI', Target_Bulanan:'803571', Realisasi_Bulanan:'457111', Target_Kumulatif:'1696428', Realisasi_Kumulatif:'916763'},
+    {Bulan:'MARET', Target_Bulanan:'758929', Realisasi_Bulanan:'511559', Target_Kumulatif:'2455357', Realisasi_Kumulatif:'1428322'},
+    {Bulan:'APRIL', Target_Bulanan:'937499', Realisasi_Bulanan:'773559', Target_Kumulatif:'3392856', Realisasi_Kumulatif:'2201881'},
+    {Bulan:'MEI', Target_Bulanan:'714286', Realisasi_Bulanan:'1185344', Target_Kumulatif:'4107142', Realisasi_Kumulatif:'3387225'},
+    {Bulan:'JUNI', Target_Bulanan:'892858', Realisasi_Bulanan:'1042769', Target_Kumulatif:'5000000', Realisasi_Kumulatif:'4429994'},
+    {Bulan:'JULI', Target_Bulanan:'898438', Realisasi_Bulanan:'70073', Target_Kumulatif:'5898438', Realisasi_Kumulatif:'4500067'},
+  ]);
+}
+
+/* ---- Matriks realisasi P2TL per ULP per bulan (Target/Realisasi/% Capaian), format sama seperti tabel Susut ---- */
+let ulpContribData = [];
+let ulpContribUp3Data = [];
+function p2tlUlpRender(rows){
+  const uKey = findKey(rows[0], ['ulp','unit']);
+  const bKey = findKey(rows[0], ['bulan']);
+  if(!uKey||!bKey){ setStatus('p2tl_ulp_status', false, 'Kolom ULP/Bulan tidak ditemukan.'); return; }
+  const keys = Object.keys(rows[0]);
+  const bIdx = keys.indexOf(bKey);
+  const tbKey = keys[bIdx+1], rbKey = keys[bIdx+2], tkKey = keys[bIdx+3], rkKey = keys[bIdx+4];
+  if(!tbKey||!rbKey||!tkKey||!rkKey){
+    setStatus('p2tl_ulp_status', false, 'Kolom setelah "Bulan" kurang dari 4 (Target_Bulanan, Realisasi_Bulanan, Target_Kumulatif, Realisasi_Kumulatif).');
+    return;
+  }
+  const isUp3Total = ulpName => /^UP3\b/i.test(String(ulpName).trim());
+  const dataAll = rows.map(r=>({
+    ulp:String(r[uKey]||'').trim(), bulan:String(r[bKey]||'').trim(),
+    tb:num(r[tbKey]), rb:num(r[rbKey]), tk:num(r[tkKey]), rk:num(r[rkKey]),
+    rkFilled: num(r[rkKey])>0 || num(r[rbKey])>0
+  })).filter(d=>d.ulp && d.bulan);
+  ulpContribData = dataAll.filter(d=>!isUp3Total(d.ulp));
+  ulpContribUp3Data = dataAll.filter(d=>isUp3Total(d.ulp));
+  p2tlUlpRecalc();
+  setStatus('p2tl_ulp_status', true, 'Data ULP berhasil dimuat.');
+}
+function p2tlUlpRecalc(){
+  if(!ulpContribData.length) return;
+  const ulps = [...new Set(ulpContribData.map(d=>d.ulp))];
+  const bulans = [...new Set(ulpContribData.map(d=>d.bulan))];
+
+  let thead = '<thead><tr><th>UNIT</th><th>Sat</th>' + bulans.map(b=>`<th>${b}</th>`).join('') + '</tr></thead>';
+  let tbody = '<tbody>';
+  ulps.forEach(u=>{
+    tbody += `<tr><td rowspan="3">${u}</td><td class="label">TARGET</td>` + bulans.map(b=>{
+      const d = ulpContribData.find(x=>x.ulp===u && x.bulan===b);
+      if(!d) return '<td>-</td>';
+      return `<td>${d.tb.toLocaleString('id-ID')}</td>`;
+    }).join('') + '</tr>';
+    tbody += `<tr><td class="label">REAL</td>` + bulans.map(b=>{
+      const d = ulpContribData.find(x=>x.ulp===u && x.bulan===b);
+      if(!d || !d.rkFilled) return '<td>-</td>';
+      return `<td>${d.rb.toLocaleString('id-ID')}</td>`;
+    }).join('') + '</tr>';
+    tbody += `<tr><td class="label">%</td>` + bulans.map(b=>{
+      const d = ulpContribData.find(x=>x.ulp===u && x.bulan===b);
+      if(!d || !d.rkFilled) return '<td>-</td>';
+      const ratio = d.tb ? (d.rb/d.tb*100) : 0;
+      return `<td class="${achievementTierClass(ratio)}">${ratio.toFixed(2)}%</td>`;
+    }).join('') + '</tr>';
+  });
+  // Baris total UP3 MADIUN, kalau ada di CSV
+  if(ulpContribUp3Data.length){
+    tbody += `<tr class="up3-row"><td rowspan="3">UP3 MADIUN</td><td class="label" style="color:#cfe0f0;">TARGET</td>` + bulans.map(b=>{
+      const d3 = ulpContribUp3Data.find(d=>d.bulan===b);
+      return d3 ? `<td>${d3.tb.toLocaleString('id-ID')}</td>` : '<td>-</td>';
+    }).join('') + '</tr>';
+    tbody += `<tr class="up3-row"><td class="label" style="color:#cfe0f0;">REAL</td>` + bulans.map(b=>{
+      const d3 = ulpContribUp3Data.find(d=>d.bulan===b);
+      if(!d3 || !d3.rkFilled) return '<td>-</td>';
+      return `<td>${d3.rb.toLocaleString('id-ID')}</td>`;
+    }).join('') + '</tr>';
+    tbody += `<tr class="up3-row"><td class="label" style="color:#cfe0f0;">%</td>` + bulans.map(b=>{
+      const d3 = ulpContribUp3Data.find(d=>d.bulan===b);
+      if(!d3 || !d3.rkFilled) return '<td>-</td>';
+      const ratio = d3.tb ? (d3.rb/d3.tb*100) : 0;
+      return `<td class="${achievementTierClass(ratio)}">${ratio.toFixed(2)}%</td>`;
+    }).join('') + '</tr>';
+  }
+  tbody += '</tbody>';
+  document.getElementById('p2tl_ulp_matrix').innerHTML = thead + tbody;
+
+  // Chart ringkas: target vs realisasi KUMULATIF per ULP, diambil dari bulan terakhir yang terisi
+  const latestByUlp = ulps.map(u=>{
+    const rowsU = ulpContribData.filter(d=>d.ulp===u && d.rkFilled);
+    const d = rowsU.length ? rowsU[rowsU.length-1] : null;
+    return d ? {ulp:u, tk:d.tk, rk:d.rk} : {ulp:u, tk:0, rk:0};
+  }).sort((a,b)=>b.rk-a.rk);
+  destroyChart('p2tl_chart');
+  charts['p2tl_chart'] = new Chart(document.getElementById('p2tl_chart'), {
+    type:'bar',
+    data:{ labels:latestByUlp.map(d=>d.ulp), datasets:[
+      {label:'Target kumulatif', data:latestByUlp.map(d=>d.tk), backgroundColor:'#1f6fc6', borderRadius:4, maxBarThickness:22},
+      {label:'Realisasi kumulatif', data:latestByUlp.map(d=>d.rk), backgroundColor:'#1c8a4a', borderRadius:4, maxBarThickness:22}]},
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom', labels:{boxWidth:10, font:{size:11}}}},
+      scales:{ y:{beginAtZero:true} } }
+  });
+}
+async function p2tlUlpLoad(){
+  const url = document.getElementById('p2tl_ulp_url').value.trim();
+  if(!url){ setStatus('p2tl_ulp_status', false, 'Masukkan link CSV terlebih dahulu.'); return; }
+  setStatus('p2tl_ulp_status', true, 'Memuat data...');
+  try{ p2tlUlpRender(await fetchCSV(url)); } catch(e){ setStatus('p2tl_ulp_status', false, 'Gagal memuat: ' + e.message); }
+}
+function p2tlUlpSample(){
+  const bulans = ['JAN','FEB','MAR','APR','MEI','JUN','JUL'];
+  const tb = {
+    'MADIUN KOTA':[160873,144785,136742,168916,128698,161878,161878],
+    'MAGETAN':    [159735,143762,135775,167613,127632,160734,160734],
+    'NGAWI':      [160873,144785,136742,168916,128698,161878,161878],
+    'MAOSPATI':   [88841,79957,75515,93198,71204,89396,89396],
+    'CARUBAN':    [122279,110051,103937,128213,97952,123043,123043],
+    'DOLOPO':     [100114,90103,85097,104958,80200,100740,100740],
+    'MANTINGAN':  [100142,90128,85121,104985,80221,100768,100768],
+  };
+  const rb = {
+    'MADIUN KOTA':[81226,17033,29455,95840,128698,161878,10744],
+    'MAGETAN':    [63408,58414,85936,96513,127632,160734,10665],
+    'NGAWI':      [129417,124880,112455,162359,163361,161878,10744],
+    'MAOSPATI':   [41495,42046,56412,60357,71204,89396,5940],
+    'CARUBAN':    [36584,68686,73282,80964,146418,123043,8160],
+    'DOLOPO':     [46296,36987,113614,46459,80200,100740,6670],
+    'MANTINGAN':  [61227,109040,116635,133327,80221,100768,6670],
+  };
+  const rows = [];
+  const cumT = {}, cumR = {};
+  Object.keys(tb).forEach(u=>{ cumT[u]=0; cumR[u]=0; });
+  bulans.forEach((b,i)=>{
+    Object.keys(tb).forEach(u=>{
+      cumT[u]+=tb[u][i]; cumR[u]+=rb[u][i];
+      rows.push({ULP:u, Bulan:b, Target_Bulanan:tb[u][i], Realisasi_Bulanan:rb[u][i], Target_Kumulatif:cumT[u], Realisasi_Kumulatif:cumR[u]});
+    });
+  });
+  p2tlUlpRender(rows);
+}
+
+/* ================= TAB 5: GANTI METER & AMRISASI ================= */
+let gmData = [];
+function gmRender(rows){
+  const bKey = findKey(rows[0], ['bulan']);
+  const tKey = findKey(rows[0], ['target']);
+  const rKey = findKey(rows[0], ['realisasi']);
+  if(!bKey||!tKey||!rKey){ setStatus('gm_status', false, 'Kolom Bulan/Target/Realisasi tidak ditemukan.'); return; }
+  gmData = rows.map(r=>({bulan:r[bKey], target:num(r[tKey]), realisasi:num(r[rKey])})).filter(d=>d.bulan);
+  gmRecalc();
+  setStatus('gm_status', true, 'Data berhasil dimuat.');
+}
+function gmRecalc(){
+  if(!gmData.length) return;
+  const filled = gmData.filter(d => (d.target + d.realisasi) > 0);
+  if(!filled.length) return;
+  const last = filled[filled.length-1];
+  const capaian = last.target ? (last.realisasi/last.target*100) : 0;
+  const amrTarget = num(document.getElementById('gm_amr_target').value);
+  const amrReal = num(document.getElementById('gm_amr_real').value);
+  const amrCapaian = amrTarget ? (amrReal/amrTarget*100) : 0;
+  document.getElementById('gm_kpi').innerHTML = `
+    <div class="kpi-card"><div class="kpi-label">Realisasi ganti meter (terakhir)</div><div class="kpi-value">${last.realisasi.toLocaleString('id-ID')} unit</div></div>
+    <div class="kpi-card green"><div class="kpi-label">Target s.d periode ini</div><div class="kpi-value">${last.target.toLocaleString('id-ID')} unit</div></div>
+    <div class="kpi-card ${capaian>=100?'green':'red'}"><div class="kpi-label">Persentase capaian</div><div class="kpi-value">${capaian.toFixed(2)}%</div></div>
+    <div class="kpi-card purple"><div class="kpi-label">Realisasi amrisasi</div><div class="kpi-value">${amrReal.toLocaleString('id-ID')} unit</div><div class="kpi-sub">dari target ${amrTarget.toLocaleString('id-ID')} unit</div></div>
+    <div class="kpi-card ${amrCapaian>=100?'green':'amber'}"><div class="kpi-label">Capaian amrisasi</div><div class="kpi-value">${amrCapaian.toFixed(2)}%</div></div>`;
+  document.getElementById('gm_table').innerHTML = gmData.map(d=>{
+    const c = d.target ? (d.realisasi/d.target*100) : 0;
+    return `<tr><td>${d.bulan}</td><td>${d.target.toLocaleString('id-ID')}</td><td>${d.realisasi.toLocaleString('id-ID')}</td><td><span class="pill ${c>=100?'good':'bad'}">${c.toFixed(2)}%</span></td></tr>`;
+  }).join('');
+  destroyChart('gm_chart');
+  charts['gm_chart'] = new Chart(document.getElementById('gm_chart'), {
+    type:'line', data:{ labels:gmData.map(d=>d.bulan), datasets:[
+      {label:'Target kumulatif', data:gmData.map(d=>d.target), borderColor:'#1f6fc6', tension:0.2},
+      {label:'Realisasi kumulatif', data:gmData.map(d=>d.realisasi), borderColor:'#1c8a4a', tension:0.2}]},
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}} }
+  });
+  showDash('gm');
+}
+async function gmLoad(){
+  const url = document.getElementById('gm_url').value.trim();
+  if(!url){ setStatus('gm_status', false, 'Masukkan link CSV terlebih dahulu.'); return; }
+  setStatus('gm_status', true, 'Memuat data...');
+  try{ gmRender(await fetchCSV(url)); } catch(e){ setStatus('gm_status', false, 'Gagal memuat: ' + e.message); }
+}
+function gmSample(){
+  gmRender([
+    {Bulan:'JAN', Target_Kumulatif:'1281', Realisasi_Kumulatif:'819'},
+    {Bulan:'FEB', Target_Kumulatif:'3251', Realisasi_Kumulatif:'1638'},
+    {Bulan:'MAR', Target_Kumulatif:'4768', Realisasi_Kumulatif:'2457'},
+    {Bulan:'APR', Target_Kumulatif:'6521', Realisasi_Kumulatif:'4095'},
+    {Bulan:'MEI', Target_Kumulatif:'7371', Realisasi_Kumulatif:'5733'},
+    {Bulan:'JUN', Target_Kumulatif:'8750', Realisasi_Kumulatif:'8584'},
+  ]);
+}
+
+/* ================= TAB 6: PROGNOSA SUSUT ================= */
+function progRender(rows){
+  const pKey = findKey(rows[0], ['periode','bulan']);
+  const prodKey = findKey(rows[0], ['produksi']);
+  const jualKey = findKey(rows[0], ['jual']);
+  const susutKey = findKey(rows[0], ['susut']);
+  const statusKey = findKey(rows[0], ['status']);
+  if(!pKey||!prodKey||!jualKey||!susutKey){ setStatus('prog_status', false, 'Kolom Periode/Produksi/Jual/Susut tidak ditemukan.'); return; }
+  const data = rows.map(r=>({periode:r[pKey], produksi:num(r[prodKey]), jual:num(r[jualKey]), susut:num(r[susutKey]), status: statusKey?r[statusKey]:'Realisasi'})).filter(d=>d.periode);
+  const last = data[data.length-1];
+  const prev = data[data.length-2];
+  const prognosaRows = data.filter(d=>(d.status||'').toLowerCase().includes('prog'));
+  const isProg = (d)=>(d.status||'').toLowerCase().includes('prog');
+  const susutDiff = prev ? (last.susut-prev.susut) : 0;
+
+  document.getElementById('prog_period').textContent = `${last.periode.toUpperCase()} — STATUS ${(last.status||'').toUpperCase()}`;
+
+  document.getElementById('prog_kpi').innerHTML = `
+    <div class="icon-kpi"><div class="circle navy">⚡</div><div><div class="ik-label">KWh produksi (${last.periode})</div><div class="ik-value">${(last.produksi/1e6).toFixed(2)} <small>GWh</small></div></div></div>
+    <div class="icon-kpi"><div class="circle teal">🛒</div><div><div class="ik-label">KWh jual (${last.periode})</div><div class="ik-value">${(last.jual/1e6).toFixed(2)} <small>GWh</small></div></div></div>
+    <div class="icon-kpi"><div class="circle ${last.susut<=8?'green':'amber'}">📉</div><div><div class="ik-label">Susut (${last.periode})</div><div class="ik-value">${last.susut.toFixed(2)}<small>%</small></div></div></div>
+    <div class="icon-kpi"><div class="circle ${susutDiff<=0?'green':'amber'}">${susutDiff<=0?'⬇':'⬆'}</div><div><div class="ik-label">Perubahan susut vs bln lalu</div><div class="ik-value">${susutDiff>=0?'+':''}${susutDiff.toFixed(2)} <small>poin</small></div></div></div>
+    <div class="icon-kpi"><div class="circle purple">📋</div><div><div class="ik-label">Bulan berstatus prognosa</div><div class="ik-value">${prognosaRows.length} <small>bulan</small></div></div></div>`;
+
+  document.getElementById('prog_table').innerHTML = data.map(d=>{
+    const kwhSusut = d.produksi - d.jual;
+    return `<tr><td>${d.periode}</td><td><span class="pill ${isProg(d)?'bad':'good'}">${d.status}</span></td><td>${d.produksi.toLocaleString('id-ID')}</td><td>${d.jual.toLocaleString('id-ID')}</td><td>${kwhSusut.toLocaleString('id-ID')}</td><td>${d.susut.toFixed(2)}%</td></tr>`;
+  }).join('');
+
+  destroyChart('prog_chart1');
+  charts['prog_chart1'] = new Chart(document.getElementById('prog_chart1'), {
+    type:'bar', data:{ labels:data.map(d=>d.periode), datasets:[
+      {label:'KWh produksi', data:data.map(d=>d.produksi/1e6), backgroundColor:data.map(d=>isProg(d)?'#9fc4e8':'#1f6fc6'), borderRadius:5, maxBarThickness:26},
+      {label:'KWh jual', data:data.map(d=>d.jual/1e6), backgroundColor:data.map(d=>isProg(d)?'#a8d8bb':'#1c8a4a'), borderRadius:5, maxBarThickness:26}]},
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom', labels:{boxWidth:10, font:{size:11}}}}, scales:{y:{title:{display:true,text:'GWh'}}} }
+  });
+
+  destroyChart('prog_chart2');
+  charts['prog_chart2'] = new Chart(document.getElementById('prog_chart2'), {
+    type:'line', data:{ labels:data.map(d=>d.periode), datasets:[
+      {label:'Susut %', data:data.map(d=>d.susut),
+        segment:{ borderColor: ctx => isProg(data[ctx.p1DataIndex]) ? '#d23b3b' : '#1c8a4a', borderDash: ctx => isProg(data[ctx.p1DataIndex]) ? [6,4] : [] },
+        pointBackgroundColor: data.map(d=>isProg(d)?'#d23b3b':'#1c8a4a'),
+        borderColor:'#1c8a4a', pointRadius:5, tension:0.25 }]},
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{y:{ticks:{callback:v=>v+'%'}}} }
+  });
+  document.getElementById('prog_trend_caption').innerHTML = `Garis hijau = realisasi (sudah fix), garis putus-putus merah = prognosa (bulan berjalan, masih dapat berubah). Susut ${last.periode}: <b>${last.susut.toFixed(2)}%</b>${prev?` (${susutDiff<=0?'membaik':'memburuk'} ${Math.abs(susutDiff).toFixed(2)} poin dari ${prev.periode})`:''}.`;
+
+  document.getElementById('prog_insight').innerHTML = `
+    <div class="ki-point"><b>Status terkini:</b> ${last.periode} berstatus <b>${last.status}</b> dengan susut ${last.susut.toFixed(2)}%, KWh produksi ${(last.produksi/1e6).toFixed(2)} GWh dan KWh jual ${(last.jual/1e6).toFixed(2)} GWh.</div>
+    <div class="ki-point"><b>Arah tren:</b> Susut ${susutDiff<=0?'membaik (menurun)':'memburuk (meningkat)'} ${Math.abs(susutDiff).toFixed(2)} poin dibanding bulan sebelumnya.</div>
+    <div class="ki-point"><b>Status prognosa:</b> ${prognosaRows.length} bulan masih berstatus prognosa dan berpotensi berubah saat data final masuk.</div>
+    <div class="ki-point"><b>Fokus tindak lanjut:</b> Pantau gap antara kWh produksi dan kWh jual untuk deteksi dini potensi kenaikan susut.</div>`;
+
+  showDash('prog');
+  setStatus('prog_status', true, 'Data berhasil dimuat (garis putus-putus merah = bulan prognosa).');
+}
+async function progLoad(){
+  const url = document.getElementById('prog_url').value.trim();
+  if(!url){ setStatus('prog_status', false, 'Masukkan link CSV terlebih dahulu.'); return; }
+  setStatus('prog_status', true, 'Memuat data...');
+  try{ progRender(await fetchCSV(url)); } catch(e){ setStatus('prog_status', false, 'Gagal memuat: ' + e.message); }
+}
+function progSample(){
+  progRender([
+    {Periode:'2026-01', KWh_Produksi:'145200000', KWh_Jual:'135800000', Susut_Persen:'6.47', Status:'Realisasi'},
+    {Periode:'2026-02', KWh_Produksi:'148629313', KWh_Jual:'138135640', Susut_Persen:'7.07', Status:'Realisasi'},
+    {Periode:'2026-03', KWh_Produksi:'150810000', KWh_Jual:'140400000', Susut_Persen:'6.91', Status:'Realisasi'},
+    {Periode:'2026-04', KWh_Produksi:'151200000', KWh_Jual:'141500000', Susut_Persen:'8.36', Status:'Realisasi'},
+    {Periode:'2026-05', KWh_Produksi:'165662901', KWh_Jual:'152365655', Susut_Persen:'7.48', Status:'Prognosa'},
+  ]);
+}
+
+/* ================= AUTO-SAVE LINK & AUTO-REFRESH ================= */
+const AUTO_STORAGE_KEY = 'up3madiun_dash_links_v1';
+const AUTO_REFRESH_MS = 5 * 60 * 1000; // refresh data setiap 5 menit
+
+const AUTO_TABS = [
+  { urlId:'susut_url', loadFn:()=>susutLoad() },
+  { urlId:'kwh_url',   loadFn:()=>kwhLoad() },
+  { urlId:'comp_url',  loadFn:()=>compLoad() },
+  { urlId:'pra_url',   loadFn:()=>praLoad() },
+  { urlId:'gm_url',    loadFn:()=>gmLoad() },
+  { urlId:'prog_url',  loadFn:()=>progLoad() },
+];
+
+function getSavedLinks(){
+  try{ return JSON.parse(localStorage.getItem(AUTO_STORAGE_KEY) || '{}'); }
+  catch(e){ return {}; }
+}
+function saveLink(urlId, url){
+  const links = getSavedLinks();
+  if(url){ links[urlId] = url; } else { delete links[urlId]; }
+  localStorage.setItem(AUTO_STORAGE_KEY, JSON.stringify(links));
+}
+
+let charts = {};
+function destroyChart(id){ if(charts[id]){ charts[id].destroy(); delete charts[id]; } }
+
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-'+btn.dataset.tab).classList.add('active');
+  });
+});
+
+AUTO_TABS.forEach(({urlId})=>{
+  const input = document.getElementById(urlId);
+  if(!input) return;
+  input.addEventListener('change', ()=> saveLink(urlId, input.value.trim()));
+});
+document.querySelectorAll('.config button:not(.secondary)').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const input = btn.parentElement.querySelector('input[id$="_url"]');
+    if(input && input.value.trim()) saveLink(input.id, input.value.trim());
+  });
+});
+
+function refreshBadge(msg){
+  let el = document.getElementById('auto_refresh_badge');
+  if(!el){
+    el = document.createElement('div');
+    el.id = 'auto_refresh_badge';
+    el.style.cssText = 'position:fixed;bottom:14px;right:14px;background:#0d2a4a;color:#fff;font-size:11px;font-weight:600;padding:7px 12px;border-radius:20px;box-shadow:0 4px 14px rgba(13,42,74,.25);z-index:999;font-family:Inter,sans-serif;opacity:.92;';
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+}
+
+async function autoLoadAll(isInitial){
+  const links = getSavedLinks();
+  const tabsWithLink = AUTO_TABS.filter(t => links[t.urlId]);
+  if(!tabsWithLink.length) return;
+  if(isInitial){
+    tabsWithLink.forEach(({urlId})=>{
+      const input = document.getElementById(urlId);
+      if(input) input.value = links[urlId];
+    });
+  }
+  refreshBadge('🔄 Memuat ulang data...');
+  for(const {urlId, loadFn} of tabsWithLink){
+    try{ await loadFn(); } catch(e){ /* status sudah ditangani masing-masing Load() */ }
+  }
+  const now = new Date();
+  refreshBadge('✓ Data terbaru — ' + now.toLocaleTimeString('id-ID', {hour:'2-digit',minute:'2-digit'}));
+}
+
+window.addEventListener('DOMContentLoaded', ()=>{ autoLoadAll(true); });
+setInterval(()=>autoLoadAll(false), AUTO_REFRESH_MS);
+document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='visible') autoLoadAll(false); });
 </script>
 </body>
 </html>

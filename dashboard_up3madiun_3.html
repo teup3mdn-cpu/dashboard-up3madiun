@@ -1192,15 +1192,33 @@ function p2tlRender(rows){
   p2tlRecalc();
   setStatus('p2tl_status', true, 'Data berhasil dimuat (kolom diambil dari posisi setelah Bulan: '+tbKey+', '+rbKey+', '+tkKey+', '+rkKey+').');
 }
+// ---- Pemetaan nama bulan Indonesia (penuh & singkatan) ke indeks 0-11, dipakai untuk
+// mencocokkan baris data P2TL dengan bulan kalender YANG SEDANG BERJALAN saat ini
+// (bukan sekadar baris terakhir yang kebetulan punya nilai kumulatif > 0).
+const INDO_BULAN_FULL = ["JANUARI","FEBRUARI","MARET","APRIL","MEI","JUNI","JULI","AGUSTUS","SEPTEMBER","OKTOBER","NOVEMBER","DESEMBER"];
+const INDO_BULAN_ABBR = ["JAN","FEB","MAR","APR","MEI","JUN","JUL","AGU","SEP","OKT","NOV","DES"];
+function indoMonthIndex(name){
+  const n = String(name||'').trim().toUpperCase();
+  let idx = INDO_BULAN_FULL.indexOf(n);
+  if(idx === -1) idx = INDO_BULAN_ABBR.indexOf(n.slice(0,3));
+  return idx; // -1 kalau tidak dikenali
+}
 function p2tlRecalc(){
   if(!p2tlData.length) return;
   const rows = p2tlData; // cumT & cumR sudah kumulatif langsung dari sumber, tidak di-SUM lagi di sini
-  // Pakai bulan terakhir yang SUDAH ADA realisasinya (bukan sekadar baris terakhir di tabel,
-  // karena bulan-bulan berikutnya yang belum berjalan biasanya realisasinya masih 0 tapi
-  // targetnya sudah terisi penuh setahun, sehingga akan membuat target kumulatif kegedean).
-  const rowsWithReal = rows.filter(r=>r.realisasiFilled);
-  const last = rowsWithReal.length ? rowsWithReal[rowsWithReal.length-1] : rows[rows.length-1];
   const first = rows[0];
+
+  // ---- Tentukan "bulan berjalan" berdasarkan bulan KALENDER SAAT INI (bukan baris
+  // terakhir di tabel). Ini mencegah kartu KPI menampilkan bulan yang belum berjalan
+  // (mis. Desember) hanya karena baris itu punya nilai kumulatif carry-over > 0. ----
+  const currentMonthIdx = new Date().getMonth(); // 0 = Januari ... 11 = Desember
+  let last = rows.find(r => indoMonthIndex(r.bulan) === currentMonthIdx);
+  if(!last){
+    // Fallback: bulan berjalan belum ada di data yang dimuat -> pakai baris terakhir
+    // yang realisasi bulanannya benar-benar terisi (rb > 0), baru fallback ke baris terakhir.
+    const rowsWithReal = rows.filter(r=>r.rb>0);
+    last = rowsWithReal.length ? rowsWithReal[rowsWithReal.length-1] : (rows.filter(r=>r.realisasiFilled).slice(-1)[0] || rows[rows.length-1]);
+  }
   const gap = last.cumT - last.cumR;
   const gapPct = last.cumT ? (gap/last.cumT*100) : 0;
   const capaian = last.cumT ? (last.cumR/last.cumT*100) : 0;
@@ -1210,10 +1228,11 @@ function p2tlRecalc(){
   const gapBulananPct = last.tb ? (gapBulanan/last.tb*100) : 0;
   const pctBulanan = last.tb ? (last.rb/last.tb*100) : 0;
 
-  // ---- 4 poin ringkasan bulan berjalan (data ter-link real-time ke sumber) ----
+  // ---- 4 poin ringkasan bulan berjalan (data ter-link real-time ke sumber, sumber
+  // diperbarui setiap 1 jam sehingga angka berikut mengikuti update sumber terakhir) ----
   const now = new Date();
   const tglJam = now.toLocaleDateString('id-ID', {day:'2-digit', month:'long', year:'numeric'}) + ', pukul ' + now.toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'}) + ' WIB';
-  document.getElementById('p2tl_live_caption').innerHTML = `📡 Ringkasan bulan berjalan (${last.bulan}) &mdash; data diperbarui ${tglJam}, mengikuti sumber yang ter-link langsung ke realisasi harian.`;
+  document.getElementById('p2tl_live_caption').innerHTML = `📡 Ringkasan bulan berjalan (${last.bulan}) &mdash; data diperbarui ${tglJam}, mengikuti sumber yang ter-link langsung dan diperbarui setiap 1 jam.`;
   document.getElementById('p2tl_live_points').innerHTML = `
     <div><div style="font-size:10.5px;opacity:.75;text-transform:uppercase;letter-spacing:.3px;">Realisasi bulan (${last.bulan})</div><div style="font-size:19px;font-weight:800;">${last.rb.toLocaleString('id-ID')} kWh</div></div>
     <div><div style="font-size:10.5px;opacity:.75;text-transform:uppercase;letter-spacing:.3px;">Target bulanan (${last.bulan})</div><div style="font-size:19px;font-weight:800;">${last.tb.toLocaleString('id-ID')} kWh</div></div>

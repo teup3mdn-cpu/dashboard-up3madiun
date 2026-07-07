@@ -418,15 +418,15 @@
 <!-- ================= TAB 4: EVALUASI P2TL ================= -->
 <div class="tab-panel" id="tab-p2tl">
   <div class="config">
-    <input id="p2tl_url" type="text" placeholder="Link CSV (kolom: Bulan, Target_Kumulatif, Realisasi_Kumulatif)" />
+    <input id="p2tl_url" type="text" placeholder="Link CSV (kolom: Bulan, Target_Bulanan, Realisasi_Bulanan, Target_Kumulatif, Realisasi_Kumulatif)" />
     <button onclick="p2tlLoad()">Muat data</button>
     <button class="secondary" onclick="p2tlSample()">Lihat contoh</button>
-    <div class="hint">Format: <b>Bulan (Januari, Februari, ...), Target_Kumulatif, Realisasi_Kumulatif</b> &mdash; kolom ini harus berisi nilai <b>KUMULATIF yang sudah dihitung di sheet sumber</b> (kolom Target_Kumulatif / Realisasi_Kumulatif di sheet "master data" / P2TL AP2T), <b>bukan</b> nilai bulanan. Dashboard akan mengambil nilai dari baris bulan terakhir yang sudah terisi, tanpa menjumlahkannya lagi, supaya tidak dobel hitung.</div>
+    <div class="hint">Format (5 kolom, urut persis seperti kolom C&ndash;G di sheet sumber): <b>Bulan, Target_Bulanan, Realisasi_Bulanan, Target_Kumulatif, Realisasi_Kumulatif</b>. Kolom diambil berdasarkan <b>urutan posisi setelah kolom Bulan</b> (bukan nama header), supaya tidak salah tangkap seperti sebelumnya. Realisasi_Bulanan adalah nilai <b>s.d hari ini untuk bulan berjalan</b> (link langsung ke sumber, ter-update real-time).</div>
     <div class="status" id="p2tl_status"></div>
-    <input id="p2tl_ulp_url" type="text" placeholder="Link CSV kontribusi per ULP (kolom: ULP, Realisasi_kWh)" style="margin-top:8px;" />
+    <input id="p2tl_ulp_url" type="text" placeholder="Link CSV per ULP (kolom: ULP, Target_Bulanan, Realisasi_Bulanan, Target_Kumulatif, Realisasi_Kumulatif)" style="margin-top:8px;" />
     <button onclick="p2tlUlpLoad()">Muat data ULP</button>
     <button class="secondary" onclick="p2tlUlpSample()">Lihat contoh</button>
-    <div class="hint">Format: <b>ULP, Realisasi_kWh</b> — total realisasi P2TL per ULP untuk periode berjalan. Sumber: tabel REALISASI (BULANAN) per ULP di sheet P2TL (AP2T). Jangan sertakan baris total/agregat "UP3 MADIUN" di CSV ini — cukup baris ULP individual, supaya persentase kontribusi tidak dobel hitung.</div>
+    <div class="hint">Format (5 kolom): <b>ULP, Target_Bulanan, Realisasi_Bulanan, Target_Kumulatif, Realisasi_Kumulatif</b> — snapshot periode berjalan per ULP. Jangan sertakan baris total/agregat "UP3 MADIUN". Panel ini menampilkan realisasi Bulanan vs Kumulatif per ULP terhadap target masing-masing (bukan persentase kontribusi lagi).</div>
     <div class="status" id="p2tl_ulp_status"></div>
   </div>
   <div class="manual-box">
@@ -452,6 +452,7 @@
         <div id="p2tl_side"></div>
       </div>
       <div class="exec-main">
+        <div id="p2tl_live_banner" style="background:linear-gradient(135deg,#0d3a5c,#123a63);color:#fff;border-radius:12px;padding:13px 18px;margin-bottom:14px;font-size:13px;line-height:1.5;box-shadow:var(--shadow-sm);"></div>
         <div class="kpi-row" id="p2tl_kpi"></div>
         <div class="panels">
           <div class="panel">
@@ -461,15 +462,21 @@
             </div>
           </div>
           <div class="panel">
-            <div class="panel-head">Kontribusi realisasi per ULP (kWh)</div>
-            <div class="panel-body" style="padding:0;display:flex;flex-direction:column;">
-              <table style="margin-bottom:6px;"><thead><tr><th>ULP</th><th>Realisasi</th><th>Kontribusi</th></tr></thead><tbody id="p2tl_ulp_table"></tbody></table>
-              <div class="chart-wrap" style="height:200px;padding:0 14px 10px;"><canvas id="p2tl_chart"></canvas></div>
-            </div>
-          </div>
-          <div class="panel">
             <div class="panel-head">Analisis finansial</div>
             <div class="panel-body" id="p2tl_finance"></div>
+          </div>
+        </div>
+        <div class="panel" style="margin-top:14px;">
+          <div class="panel-head">Realisasi P2TL per ULP &mdash; Bulanan vs Kumulatif</div>
+          <div class="panel-body" style="padding:0;">
+            <div style="overflow-x:auto;">
+              <table style="min-width:720px;">
+                <thead><tr><th rowspan="2" style="vertical-align:bottom;">ULP</th><th colspan="3" style="text-align:center;border-bottom:1px solid var(--border);">Bulanan</th><th colspan="3" style="text-align:center;border-bottom:1px solid var(--border);">Kumulatif</th></tr>
+                <tr><th>Target</th><th>Realisasi</th><th>% Capaian</th><th>Target</th><th>Realisasi</th><th>% Capaian</th></tr></thead>
+                <tbody id="p2tl_ulp_table"></tbody>
+              </table>
+            </div>
+            <div class="chart-wrap" style="height:220px;padding:10px 14px 14px;"><canvas id="p2tl_chart"></canvas></div>
           </div>
         </div>
         <div class="exec-footer">
@@ -785,24 +792,26 @@ function susutRender(rows){
   // ---- matrix bulanan per ULP: TARGET, REALISASI (tier 4-warna) + % TARGET (tier 3-warna) ----
   let thead = '<thead><tr><th>UNIT</th><th>Sat</th>' + bulans.map(b=>`<th>${b}</th>`).join('') + '</tr></thead>';
   let tbody = '<tbody>';
+  // Catatan: matriks ini menampilkan nilai KUMULATIF (tk/rk), bukan bulanan (tb/rb) —
+  // sesuai permintaan, tb/rb hanya dipakai sebagai fallback kalau kumulatif kosong.
   ulps.forEach(u=>{
     tbody += `<tr><td rowspan="3">${u}</td><td class="label">TARGET</td>` + bulans.map(b=>{
       const d = data.find(x=>x.ulp===u && x.bulan===b);
       if(!d) return '<td>-</td>';
-      const v = d.tb!=null?d.tb:d.tk;
+      const v = d.tk!=null?d.tk:d.tb;
       return `<td class="${susutTierClass(v)}">${v.toFixed(2)}%</td>`;
     }).join('') + '</tr>';
     tbody += `<tr><td class="label">REALISASI</td>` + bulans.map(b=>{
       const d = data.find(x=>x.ulp===u && x.bulan===b);
       if(!d || !d.rkFilled) return '<td>-</td>';
-      const v = d.rb!=null?d.rb:d.rk;
+      const v = d.rk!=null?d.rk:d.rb;
       return `<td class="${susutTierClass(v)}">${v.toFixed(2)}%</td>`;
     }).join('') + '</tr>';
     tbody += `<tr><td class="label">% TARGET</td>` + bulans.map(b=>{
       const d = data.find(x=>x.ulp===u && x.bulan===b);
       if(!d || !d.rkFilled) return '<td>-</td>';
-      const v = d.rb!=null?d.rb:d.rk;
-      const t = d.tb!=null?d.tb:d.tk;
+      const v = d.rk!=null?d.rk:d.rb;
+      const t = d.tk!=null?d.tk:d.tb;
       const ratio = v ? (t/v*100) : 0;
       return `<td class="${achievementTierClass(ratio)}">${ratio.toFixed(2)}%</td>`;
     }).join('') + '</tr>';
@@ -811,10 +820,10 @@ function susutRender(rows){
   tbody += `<tr class="up3-row"><td rowspan="3">UP3 MADIUN</td><td class="label" style="color:#cfe0f0;">TARGET</td>` + bulans.map(b=>{
     const d3 = up3Data.find(d=>d.bulan===b);
     let v;
-    if(d3){ v = d3.tb!=null?d3.tb:d3.tk; }
+    if(d3){ v = d3.tk!=null?d3.tk:d3.tb; }
     else{
       const rowsB = data.filter(d=>d.bulan===b);
-      v = rowsB.reduce((s,d)=>s+(d.tb!=null?d.tb:d.tk),0)/rowsB.length;
+      v = rowsB.reduce((s,d)=>s+(d.tk!=null?d.tk:d.tb),0)/rowsB.length;
     }
     return `<td class="${susutTierClass(v)}">${v.toFixed(2)}%</td>`;
   }).join('') + '</tr>';
@@ -822,12 +831,12 @@ function susutRender(rows){
     const d3 = up3Data.find(d=>d.bulan===b);
     if(d3){
       if(!d3.rkFilled) return '<td>-</td>';
-      const v = d3.rb!=null?d3.rb:d3.rk;
+      const v = d3.rk!=null?d3.rk:d3.rb;
       return `<td class="${susutTierClass(v)}">${v.toFixed(2)}%</td>`;
     }
     const rowsB = data.filter(d=>d.bulan===b);
     if(!rowsB.every(d=>d.rkFilled)) return '<td>-</td>';
-    const v = rowsB.reduce((s,d)=>s+(d.rb!=null?d.rb:d.rk),0)/rowsB.length;
+    const v = rowsB.reduce((s,d)=>s+(d.rk!=null?d.rk:d.rb),0)/rowsB.length;
     return `<td class="${susutTierClass(v)}">${v.toFixed(2)}%</td>`;
   }).join('') + '</tr>';
   tbody += `<tr class="up3-row"><td class="label" style="color:#cfe0f0;">% TARGET</td>` + bulans.map(b=>{
@@ -835,12 +844,12 @@ function susutRender(rows){
     let v, t;
     if(d3){
       if(!d3.rkFilled) return '<td>-</td>';
-      v = d3.rb!=null?d3.rb:d3.rk; t = d3.tb!=null?d3.tb:d3.tk;
+      v = d3.rk!=null?d3.rk:d3.rb; t = d3.tk!=null?d3.tk:d3.tb;
     } else {
       const rowsB = data.filter(d=>d.bulan===b);
       if(!rowsB.every(d=>d.rkFilled)) return '<td>-</td>';
-      v = rowsB.reduce((s,d)=>s+(d.rb!=null?d.rb:d.rk),0)/rowsB.length;
-      t = rowsB.reduce((s,d)=>s+(d.tb!=null?d.tb:d.tk),0)/rowsB.length;
+      v = rowsB.reduce((s,d)=>s+(d.rk!=null?d.rk:d.rb),0)/rowsB.length;
+      t = rowsB.reduce((s,d)=>s+(d.tk!=null?d.tk:d.tb),0)/rowsB.length;
     }
     const ratio = v ? (t/v*100) : 0;
     return `<td class="${achievementTierClass(ratio)}">${ratio.toFixed(2)}%</td>`;
@@ -1024,15 +1033,22 @@ function compRender(rows){
   if(!filled.length){ setStatus('comp_status', false, 'Belum ada periode dengan data komponen terisi.'); return; }
   const last = filled[filled.length-1];
   const total = last.pal + last.p2tl + last.prabayar;
+  // Label "(Prognosa)" hanya relevan untuk bulan yang SEDANG berjalan (belum selesai).
+  // Untuk bulan yang sudah lewat, datanya sudah final/realisasi — jadi label ini dihapus
+  // supaya tidak menyesatkan (mis. "PAL (Prognosa) 2026-06" padahal sekarang sudah Juli).
+  const now = new Date();
+  const currentYYYYMM = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
+  const isRunningMonth = last.periode === currentYYYYMM;
+  const palLabel = isRunningMonth ? 'PAL (Prognosa)' : 'PAL';
   document.getElementById('comp_kpi').innerHTML = `
-    <div class="icon-kpi"><div class="circle navy">🏗</div><div><div class="ik-label">PAL (Prognosa) ${last.periode}</div><div class="ik-value">${(last.pal/1e6).toFixed(2)} <small>GWh</small></div></div></div>
+    <div class="icon-kpi"><div class="circle navy">🏗</div><div><div class="ik-label">${palLabel} ${last.periode}</div><div class="ik-value">${(last.pal/1e6).toFixed(2)} <small>GWh</small></div></div></div>
     <div class="icon-kpi"><div class="circle red">🔍</div><div><div class="ik-label">Realisasi P2TL ${last.periode}</div><div class="ik-value">${(last.p2tl/1e6).toFixed(2)} <small>GWh</small></div></div></div>
     <div class="icon-kpi"><div class="circle purple">💳</div><div><div class="ik-label">Prabayar ${last.periode}</div><div class="ik-value">${(last.prabayar/1e6).toFixed(2)} <small>GWh</small></div></div></div>
     <div class="icon-kpi"><div class="circle green">Σ</div><div><div class="ik-label">Total komponen</div><div class="ik-value">${(total/1e6).toFixed(2)} <small>GWh</small></div></div></div>`;
   destroyChart('comp_chart');
   charts['comp_chart'] = new Chart(document.getElementById('comp_chart'), {
     type:'bar', data:{ labels:data.map(d=>d.periode), datasets:[
-      {label:'PAL (Prognosa)', data:data.map(d=>d.pal/1e6), backgroundColor:'#0d2a4a', stack:'s', borderRadius:3},
+      {label:'PAL', data:data.map(d=>d.pal/1e6), backgroundColor:'#0d2a4a', stack:'s', borderRadius:3},
       {label:'Realisasi P2TL', data:data.map(d=>d.p2tl/1e6), backgroundColor:'#d23b3b', stack:'s', borderRadius:3},
       {label:'Prabayar', data:data.map(d=>d.prabayar/1e6), backgroundColor:'#7a4ec9', stack:'s', borderRadius:3}]},
     options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom', labels:{boxWidth:10, font:{size:11}}}}, scales:{x:{stacked:true}, y:{stacked:true, title:{display:true,text:'GWh'}}} }
@@ -1153,29 +1169,26 @@ function praSample(){
 let p2tlData = [];
 function p2tlRender(rows){
   const bKey = findKey(rows[0], ['bulan']);
-  // PENTING: cek kolom "kumulatif" dulu di SEMUA kolom sebelum jatuh ke kata umum "target"/
-  // "realisasi" — supaya tidak salah menangkap kolom "Target_Bulanan"/"Realisasi_Bulanan"
-  // yang juga mengandung kata itu (ini penyebab bug sebelumnya: kumulatif ikut ambil angka bulanan).
-  const tKey = findKeyPriority(rows[0], [['targetkumulatif','targetkum'], ['target']]);
-  const rKey = findKeyPriority(rows[0], [['realisasikumulatif','realisasikum'], ['realisasi']]);
-  if(!bKey||!tKey||!rKey){ setStatus('p2tl_status', false, 'Kolom Bulan/Target_Kumulatif/Realisasi_Kumulatif tidak ditemukan.'); return; }
-  if(tKey.toLowerCase().replace(/[^a-z0-9]/g,'').includes('bulanan') || rKey.toLowerCase().replace(/[^a-z0-9]/g,'').includes('bulanan')){
-    setStatus('p2tl_status', false, 'Peringatan: kolom yang terdeteksi ('+tKey+' / '+rKey+') tampaknya kolom BULANAN, bukan KUMULATIF. Pastikan CSV punya kolom bernama persis "Target_Kumulatif" dan "Realisasi_Kumulatif".');
+  if(!bKey){ setStatus('p2tl_status', false, 'Kolom Bulan tidak ditemukan.'); return; }
+  // PENTING: nama header kolom kumulatif di sheet sumber terbukti tidak selalu bisa
+  // ditebak lewat nama (dua kali salah tangkap sebelumnya) — jadi sekarang diambil
+  // berdasarkan POSISI kolom setelah Bulan, sesuai konfirmasi user:
+  // Bulan, [D] Target_Bulanan, [E] Realisasi_Bulanan, [F] Target_Kumulatif, [G] Realisasi_Kumulatif.
+  const keys = Object.keys(rows[0]);
+  const bIdx = keys.indexOf(bKey);
+  const tbKey = keys[bIdx+1], rbKey = keys[bIdx+2], tkKey = keys[bIdx+3], rkKey = keys[bIdx+4];
+  if(!tbKey||!rbKey||!tkKey||!rkKey){
+    setStatus('p2tl_status', false, 'Kolom setelah "Bulan" kurang dari 4 (Target_Bulanan, Realisasi_Bulanan, Target_Kumulatif, Realisasi_Kumulatif). Cek urutan kolom CSV.');
     return;
   }
-  // PENTING: kolom Target_Kumulatif & Realisasi_Kumulatif di CSV HARUS sudah berisi nilai
-  // kumulatif (sama seperti kolom Target_Kumulatif/Realisasi_Kumulatif di sheet sumber),
-  // BUKAN nilai bulanan. Dashboard tidak menjumlahkan lagi — hanya mengambil nilai bulan
-  // terakhir yang terisi — supaya tidak terjadi double counting seperti sebelumnya.
-  const isFilled = v => v!==undefined && v!==null && String(v).trim()!=='';
   p2tlData = rows.map(r=>({
     bulan:r[bKey],
-    cumT:num(r[tKey]),
-    cumR:num(r[rKey]),
-    realisasiFilled: isFilled(r[rKey]) && num(r[rKey])>0
+    tb:num(r[tbKey]), rb:num(r[rbKey]),
+    cumT:num(r[tkKey]), cumR:num(r[rkKey]),
+    realisasiFilled: num(r[rkKey])>0 || num(r[rbKey])>0
   })).filter(d=>d.bulan);
   p2tlRecalc();
-  setStatus('p2tl_status', true, 'Data berhasil dimuat.');
+  setStatus('p2tl_status', true, 'Data berhasil dimuat (kolom diambil dari posisi setelah Bulan: '+tbKey+', '+rbKey+', '+tkKey+', '+rkKey+').');
 }
 function p2tlRecalc(){
   if(!p2tlData.length) return;
@@ -1189,6 +1202,12 @@ function p2tlRecalc(){
   const gap = last.cumT - last.cumR;
   const gapPct = last.cumT ? (gap/last.cumT*100) : 0;
   const capaian = last.cumT ? (last.cumR/last.cumT*100) : 0;
+
+  // ---- Banner realisasi bulan berjalan s.d hari ini (data ter-link real-time ke sumber) ----
+  const now = new Date();
+  const tglJam = now.toLocaleDateString('id-ID', {day:'2-digit', month:'long', year:'numeric'}) + ', pukul ' + now.toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'}) + ' WIB';
+  const pctBulanan = last.tb ? (last.rb/last.tb*100) : 0;
+  document.getElementById('p2tl_live_banner').innerHTML = `📡 <b>Realisasi P2TL bulan ${last.bulan} s.d hari ini: ${last.rb.toLocaleString('id-ID')} kWh</b> dari target bulanan ${last.tb.toLocaleString('id-ID')} kWh (${pctBulanan.toFixed(1)}%) &mdash; <span style="opacity:.8;">data diperbarui ${tglJam}, mengikuti sumber yang ter-link langsung ke realisasi harian.</span>`;
   const reguTad = num(document.getElementById('p2tl_regu_tad').value);
   const reguMandiri = num(document.getElementById('p2tl_regu_mandiri').value);
   const ts = num(document.getElementById('p2tl_ts').value);
@@ -1266,48 +1285,64 @@ async function p2tlLoad(){
   try{ p2tlRender(await fetchCSV(url)); } catch(e){ setStatus('p2tl_status', false, 'Gagal memuat: ' + e.message); }
 }
 function p2tlSample(){
-  // Contoh nilai KUMULATIF asli (bukan bulanan) — sesuai kolom Target_Kumulatif /
-  // Realisasi_Kumulatif di sheet "master data" UP3 MADIUN.
+  // Contoh 5 kolom sesuai urutan sheet sumber: Bulan, Target_Bulanan, Realisasi_Bulanan,
+  // Target_Kumulatif, Realisasi_Kumulatif (kumulatif = akumulasi bulanan, sudah dihitung di sumber).
   p2tlRender([
-    {Bulan:'JANUARI', Target_Kumulatif:'892857', Realisasi_Kumulatif:'459652'},
-    {Bulan:'FEBRUARI', Target_Kumulatif:'1785714', Realisasi_Kumulatif:'916763'},
-    {Bulan:'MARET', Target_Kumulatif:'2678571', Realisasi_Kumulatif:'1428322'},
-    {Bulan:'APRIL', Target_Kumulatif:'3571428', Realisasi_Kumulatif:'2201881'},
-    {Bulan:'MEI', Target_Kumulatif:'4464285', Realisasi_Kumulatif:'3387225'},
-    {Bulan:'JUNI', Target_Kumulatif:'5000000', Realisasi_Kumulatif:'0'},
-    {Bulan:'JULI', Target_Kumulatif:'5898436', Realisasi_Kumulatif:'4500067'},
+    {Bulan:'JANUARI', Target_Bulanan:'892857', Realisasi_Bulanan:'459652', Target_Kumulatif:'892857', Realisasi_Kumulatif:'459652'},
+    {Bulan:'FEBRUARI', Target_Bulanan:'803571', Realisasi_Bulanan:'457111', Target_Kumulatif:'1696428', Realisasi_Kumulatif:'916763'},
+    {Bulan:'MARET', Target_Bulanan:'758929', Realisasi_Bulanan:'511559', Target_Kumulatif:'2455357', Realisasi_Kumulatif:'1428322'},
+    {Bulan:'APRIL', Target_Bulanan:'937499', Realisasi_Bulanan:'773559', Target_Kumulatif:'3392856', Realisasi_Kumulatif:'2201881'},
+    {Bulan:'MEI', Target_Bulanan:'714286', Realisasi_Bulanan:'1185344', Target_Kumulatif:'4107142', Realisasi_Kumulatif:'3387225'},
+    {Bulan:'JUNI', Target_Bulanan:'892858', Realisasi_Bulanan:'1042769', Target_Kumulatif:'5000000', Realisasi_Kumulatif:'4429994'},
+    {Bulan:'JULI', Target_Bulanan:'898438', Realisasi_Bulanan:'70073', Target_Kumulatif:'5898438', Realisasi_Kumulatif:'4500067'},
   ]);
 }
 
-/* ---- kontribusi realisasi per ULP ---- */
+/* ---- realisasi P2TL per ULP: bulanan vs kumulatif (bukan lagi persentase kontribusi) ---- */
 let ulpContribData = [];
 function p2tlUlpRender(rows){
   const uKey = findKey(rows[0], ['ulp']);
-  const rKey = findKey(rows[0], ['realisasi']);
-  if(!uKey||!rKey){ setStatus('p2tl_ulp_status', false, 'Kolom ULP/Realisasi_kWh tidak ditemukan.'); return; }
-  // Buang baris total/agregat "UP3 ..." kalau ada — kolom ini harus berisi ULP individual saja,
-  // supaya total kontribusi 100% tidak dobel dengan baris agregat.
+  if(!uKey){ setStatus('p2tl_ulp_status', false, 'Kolom ULP tidak ditemukan.'); return; }
+  const keys = Object.keys(rows[0]);
+  const uIdx = keys.indexOf(uKey);
+  const tbKey = keys[uIdx+1], rbKey = keys[uIdx+2], tkKey = keys[uIdx+3], rkKey = keys[uIdx+4];
+  if(!tbKey||!rbKey||!tkKey||!rkKey){
+    setStatus('p2tl_ulp_status', false, 'Kolom setelah "ULP" kurang dari 4 (Target_Bulanan, Realisasi_Bulanan, Target_Kumulatif, Realisasi_Kumulatif).');
+    return;
+  }
+  // Buang baris total/agregat "UP3 ..." kalau ada — kolom ini harus berisi ULP individual saja.
   const isUp3Total = ulpName => /^UP3\b/i.test(String(ulpName).trim());
-  ulpContribData = rows.map(r=>({ulp:r[uKey], realisasi:num(r[rKey])})).filter(d=>d.ulp && !isUp3Total(d.ulp));
+  ulpContribData = rows.map(r=>({
+    ulp:r[uKey], tb:num(r[tbKey]), rb:num(r[rbKey]), tk:num(r[tkKey]), rk:num(r[rkKey])
+  })).filter(d=>d.ulp && !isUp3Total(d.ulp));
   p2tlUlpRecalc();
   setStatus('p2tl_ulp_status', true, 'Data ULP berhasil dimuat.');
 }
 function p2tlUlpRecalc(){
   if(!ulpContribData.length) return;
-  const total = ulpContribData.reduce((s,d)=>s+d.realisasi,0);
-  const sorted = [...ulpContribData].sort((a,b)=>b.realisasi-a.realisasi);
+  const sorted = [...ulpContribData].sort((a,b)=>b.rk-a.rk);
 
   document.getElementById('p2tl_ulp_table').innerHTML = sorted.map(d=>{
-    const pct = total ? (d.realisasi/total*100) : 0;
-    return `<tr><td>${d.ulp}</td><td>${d.realisasi.toLocaleString('id-ID')}</td><td><span class="pill good">${pct.toFixed(2)}%</span></td></tr>`;
+    const pctB = d.tb ? (d.rb/d.tb*100) : 0;
+    const pctK = d.tk ? (d.rk/d.tk*100) : 0;
+    return `<tr>
+      <td>${d.ulp}</td>
+      <td>${d.tb.toLocaleString('id-ID')}</td>
+      <td>${d.rb.toLocaleString('id-ID')}</td>
+      <td><span class="pill ${pctB>=100?'good':'bad'}">${pctB.toFixed(1)}%</span></td>
+      <td>${d.tk.toLocaleString('id-ID')}</td>
+      <td>${d.rk.toLocaleString('id-ID')}</td>
+      <td><span class="pill ${pctK>=100?'good':'bad'}">${pctK.toFixed(1)}%</span></td>
+    </tr>`;
   }).join('');
 
   destroyChart('p2tl_chart');
   charts['p2tl_chart'] = new Chart(document.getElementById('p2tl_chart'), {
     type:'bar',
     data:{ labels:sorted.map(d=>d.ulp), datasets:[
-      {label:'Realisasi (kWh)', data:sorted.map(d=>d.realisasi), backgroundColor:'#1f6fc6', borderRadius:4, maxBarThickness:30}]},
-    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+      {label:'Target kumulatif', data:sorted.map(d=>d.tk), backgroundColor:'#1f6fc6', borderRadius:4, maxBarThickness:22},
+      {label:'Realisasi kumulatif', data:sorted.map(d=>d.rk), backgroundColor:'#1c8a4a', borderRadius:4, maxBarThickness:22}]},
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom', labels:{boxWidth:10, font:{size:11}}}},
       scales:{ y:{beginAtZero:true} } }
   });
 }
@@ -1319,13 +1354,13 @@ async function p2tlUlpLoad(){
 }
 function p2tlUlpSample(){
   p2tlUlpRender([
-    {ULP:'MADIUN KOTA', Realisasi_kWh:'1801775'},
-    {ULP:'MAGETAN', Realisasi_kWh:'1789036'},
-    {ULP:'NGAWI', Realisasi_kWh:'1801775'},
-    {ULP:'MAOSPATI', Realisasi_kWh:'995017'},
-    {ULP:'CARUBAN', Realisasi_kWh:'1369521'},
-    {ULP:'DOLOPO', Realisasi_kWh:'1121282'},
-    {ULP:'MANTINGAN', Realisasi_kWh:'1121594'},
+    {ULP:'MADIUN KOTA', Target_Bulanan:'136916', Realisasi_Bulanan:'10744', Target_Kumulatif:'901520', Realisasi_Kumulatif:'687520'},
+    {ULP:'NGAWI', Target_Bulanan:'136916', Realisasi_Bulanan:'10744', Target_Kumulatif:'901520', Realisasi_Kumulatif:'687520'},
+    {ULP:'MAGETAN', Target_Bulanan:'135920', Realisasi_Bulanan:'10665', Target_Kumulatif:'894514', Realisasi_Kumulatif:'682514'},
+    {ULP:'CARUBAN', Target_Bulanan:'104000', Realisasi_Bulanan:'8160', Target_Kumulatif:'684000', Realisasi_Kumulatif:'522000'},
+    {ULP:'MANTINGAN', Target_Bulanan:'85000', Realisasi_Bulanan:'6670', Target_Kumulatif:'560000', Realisasi_Kumulatif:'427000'},
+    {ULP:'DOLOPO', Target_Bulanan:'85000', Realisasi_Bulanan:'6670', Target_Kumulatif:'560000', Realisasi_Kumulatif:'427000'},
+    {ULP:'MAOSPATI', Target_Bulanan:'75686', Realisasi_Bulanan:'5940', Target_Kumulatif:'496884', Realisasi_Kumulatif:'380000'},
   ]);
 }
 

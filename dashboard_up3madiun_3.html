@@ -156,25 +156,25 @@
   .ulp-card.good .gap{color:var(--green-text);}
   .ulp-card.bad .gap{color:var(--red-text);}
 
-  #susut_matrix{border-collapse:collapse;width:100%;}
-  #susut_matrix th, #susut_matrix td{padding:5px 8px;border:1px solid var(--border);white-space:nowrap;text-align:right;}
-  #susut_matrix th:first-child, #susut_matrix td:first-child{text-align:left;position:sticky;left:0;background:#fff;}
-  #susut_matrix thead th{background:var(--navy);color:#fff;}
-  #susut_matrix tr.up3-row td{background:var(--navy);color:#fff;font-weight:800;}
-  #susut_matrix td.good{color:var(--green-text);font-weight:700;}
-  #susut_matrix td.bad{color:var(--red-text);font-weight:700;}
-  #susut_matrix td.label{font-weight:600;color:var(--muted);font-size:11px;}
+  #susut_matrix, #p2tl_ulp_matrix{border-collapse:collapse;width:100%;}
+  #susut_matrix th, #susut_matrix td, #p2tl_ulp_matrix th, #p2tl_ulp_matrix td{padding:5px 8px;border:1px solid var(--border);white-space:nowrap;text-align:right;}
+  #susut_matrix th:first-child, #susut_matrix td:first-child, #p2tl_ulp_matrix th:first-child, #p2tl_ulp_matrix td:first-child{text-align:left;position:sticky;left:0;background:#fff;}
+  #susut_matrix thead th, #p2tl_ulp_matrix thead th{background:var(--navy);color:#fff;}
+  #susut_matrix tr.up3-row td, #p2tl_ulp_matrix tr.up3-row td{background:var(--navy);color:#fff;font-weight:800;}
+  #susut_matrix td.good, #p2tl_ulp_matrix td.good{color:var(--green-text);font-weight:700;}
+  #susut_matrix td.bad, #p2tl_ulp_matrix td.bad{color:var(--red-text);font-weight:700;}
+  #susut_matrix td.label, #p2tl_ulp_matrix td.label{font-weight:600;color:var(--muted);font-size:11px;}
   /* ---- Tier warna susut (4 tingkat, sesuai standar susut bulanan/kumulatif) ---- */
   #susut_matrix td.tier-orange{background:#ffb84d;color:#5a3600;font-weight:700;}
   #susut_matrix td.tier-green{background:#57c26b;color:#0a3d1e;font-weight:700;}
   #susut_matrix td.tier-red{background:#e34848;color:#fff;font-weight:700;}
   #susut_matrix td.tier-black{background:#1a1a1a;color:#fff;font-weight:800;}
-  /* ---- Tier warna pencapaian target (3 tingkat, baris % TARGET) ---- */
-  #susut_matrix td.ach-green{background:#57c26b;color:#0a3d1e;font-weight:800;}
-  #susut_matrix td.ach-yellow{background:#ffe066;color:#5a4b00;font-weight:800;}
-  #susut_matrix td.ach-red{background:#e34848;color:#fff;font-weight:800;}
-  #susut_matrix tr.up3-row td.tier-orange,#susut_matrix tr.up3-row td.tier-green,#susut_matrix tr.up3-row td.tier-red,#susut_matrix tr.up3-row td.tier-black,#susut_matrix tr.up3-row td.ach-green,#susut_matrix tr.up3-row td.ach-yellow,#susut_matrix tr.up3-row td.ach-red{opacity:.95;}
-  #susut_matrix .legend{font-size:10.5px;color:var(--muted);font-weight:500;}
+  /* ---- Tier warna pencapaian target (3 tingkat) — dipakai di baris/kolom % TARGET / % CAPAIAN, di kedua tabel matriks ---- */
+  #susut_matrix td.ach-green, #p2tl_ulp_matrix td.ach-green{background:#57c26b;color:#0a3d1e;font-weight:800;}
+  #susut_matrix td.ach-yellow, #p2tl_ulp_matrix td.ach-yellow{background:#ffe066;color:#5a4b00;font-weight:800;}
+  #susut_matrix td.ach-red, #p2tl_ulp_matrix td.ach-red{background:#e34848;color:#fff;font-weight:800;}
+  #susut_matrix tr.up3-row td.tier-orange,#susut_matrix tr.up3-row td.tier-green,#susut_matrix tr.up3-row td.tier-red,#susut_matrix tr.up3-row td.tier-black,#susut_matrix tr.up3-row td.ach-green,#susut_matrix tr.up3-row td.ach-yellow,#susut_matrix tr.up3-row td.ach-red,#p2tl_ulp_matrix tr.up3-row td.ach-green,#p2tl_ulp_matrix tr.up3-row td.ach-yellow,#p2tl_ulp_matrix tr.up3-row td.ach-red{opacity:.95;}
+  #susut_matrix .legend, #p2tl_ulp_matrix .legend{font-size:10.5px;color:var(--muted);font-weight:500;}
 
   /* ---- icon KPI row (prabayar / kwh jual style) ---- */
   .icon-kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:18px;}
@@ -423,10 +423,10 @@
     <button class="secondary" onclick="p2tlSample()">Lihat contoh</button>
     <div class="hint">Format (5 kolom, urut persis seperti kolom C&ndash;G di sheet sumber): <b>Bulan, Target_Bulanan, Realisasi_Bulanan, Target_Kumulatif, Realisasi_Kumulatif</b>. Kolom diambil berdasarkan <b>urutan posisi setelah kolom Bulan</b> (bukan nama header), supaya tidak salah tangkap seperti sebelumnya. Realisasi_Bulanan adalah nilai <b>s.d hari ini untuk bulan berjalan</b> (link langsung ke sumber, ter-update real-time).</div>
     <div class="status" id="p2tl_status"></div>
-    <input id="p2tl_ulp_url" type="text" placeholder="Link CSV per ULP (kolom: ULP, Target_Bulanan, Realisasi_Bulanan, Target_Kumulatif, Realisasi_Kumulatif)" style="margin-top:8px;" />
+    <input id="p2tl_ulp_url" type="text" placeholder="Link CSV per ULP per bulan (kolom: ULP, Bulan, Target_Bulanan, Realisasi_Bulanan, Target_Kumulatif, Realisasi_Kumulatif)" style="margin-top:8px;" />
     <button onclick="p2tlUlpLoad()">Muat data ULP</button>
     <button class="secondary" onclick="p2tlUlpSample()">Lihat contoh</button>
-    <div class="hint">Format (5 kolom): <b>ULP, Target_Bulanan, Realisasi_Bulanan, Target_Kumulatif, Realisasi_Kumulatif</b> — snapshot periode berjalan per ULP. Jangan sertakan baris total/agregat "UP3 MADIUN". Panel ini menampilkan realisasi Bulanan vs Kumulatif per ULP terhadap target masing-masing (bukan persentase kontribusi lagi).</div>
+    <div class="hint">Format long (satu baris per <b>ULP per bulan</b>, 6 kolom): <b>ULP, Bulan, Target_Bulanan, Realisasi_Bulanan, Target_Kumulatif, Realisasi_Kumulatif</b> — persis seperti matriks TARGET/REAL/% per unit di sheet sumber (Jan&ndash;Des). Boleh menyertakan baris total "UP3 MADIUN" sebagai baris agregat paling bawah.</div>
     <div class="status" id="p2tl_ulp_status"></div>
   </div>
   <div class="manual-box">
@@ -452,7 +452,10 @@
         <div id="p2tl_side"></div>
       </div>
       <div class="exec-main">
-        <div id="p2tl_live_banner" style="background:linear-gradient(135deg,#0d3a5c,#123a63);color:#fff;border-radius:12px;padding:13px 18px;margin-bottom:14px;font-size:13px;line-height:1.5;box-shadow:var(--shadow-sm);"></div>
+        <div id="p2tl_live_banner" style="background:linear-gradient(135deg,#0d3a5c,#123a63);color:#fff;border-radius:12px;padding:14px 18px;margin-bottom:14px;box-shadow:var(--shadow-sm);">
+          <div style="font-size:12px;opacity:.85;margin-bottom:10px;" id="p2tl_live_caption"></div>
+          <div id="p2tl_live_points" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;"></div>
+        </div>
         <div class="kpi-row" id="p2tl_kpi"></div>
         <div class="panels">
           <div class="panel">
@@ -467,14 +470,13 @@
           </div>
         </div>
         <div class="panel" style="margin-top:14px;">
-          <div class="panel-head">Realisasi P2TL per ULP &mdash; Bulanan vs Kumulatif</div>
-          <div class="panel-body" style="padding:0;">
-            <div style="overflow-x:auto;">
-              <table style="min-width:720px;">
-                <thead><tr><th rowspan="2" style="vertical-align:bottom;">ULP</th><th colspan="3" style="text-align:center;border-bottom:1px solid var(--border);">Bulanan</th><th colspan="3" style="text-align:center;border-bottom:1px solid var(--border);">Kumulatif</th></tr>
-                <tr><th>Target</th><th>Realisasi</th><th>% Capaian</th><th>Target</th><th>Realisasi</th><th>% Capaian</th></tr></thead>
-                <tbody id="p2tl_ulp_table"></tbody>
-              </table>
+          <div class="panel-head">Matriks target &amp; realisasi P2TL bulanan per ULP (kWh)</div>
+          <div class="panel-body" style="padding:0;overflow-x:auto;">
+            <table id="p2tl_ulp_matrix" style="font-size:11.5px;"></table>
+            <div class="legend" style="padding:8px 14px;">
+              Warna % CAPAIAN &mdash; <b style="color:#1c8a4a;">&#9632;</b> tercapai (&ge;100%) &nbsp;
+              <b style="color:#c9a600;">&#9632;</b> 95%&ndash;99% &nbsp;
+              <b style="color:#d23b3b;">&#9632;</b> &lt;95%
             </div>
             <div class="chart-wrap" style="height:220px;padding:10px 14px 14px;"><canvas id="p2tl_chart"></canvas></div>
           </div>
@@ -1203,11 +1205,16 @@ function p2tlRecalc(){
   const gapPct = last.cumT ? (gap/last.cumT*100) : 0;
   const capaian = last.cumT ? (last.cumR/last.cumT*100) : 0;
 
-  // ---- Banner realisasi bulan berjalan s.d hari ini (data ter-link real-time ke sumber) ----
+  // ---- 4 poin ringkasan bulan berjalan (data ter-link real-time ke sumber) ----
   const now = new Date();
   const tglJam = now.toLocaleDateString('id-ID', {day:'2-digit', month:'long', year:'numeric'}) + ', pukul ' + now.toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'}) + ' WIB';
   const pctBulanan = last.tb ? (last.rb/last.tb*100) : 0;
-  document.getElementById('p2tl_live_banner').innerHTML = `📡 <b>Realisasi P2TL bulan ${last.bulan} s.d hari ini: ${last.rb.toLocaleString('id-ID')} kWh</b> dari target bulanan ${last.tb.toLocaleString('id-ID')} kWh (${pctBulanan.toFixed(1)}%) &mdash; <span style="opacity:.8;">data diperbarui ${tglJam}, mengikuti sumber yang ter-link langsung ke realisasi harian.</span>`;
+  document.getElementById('p2tl_live_caption').innerHTML = `📡 Ringkasan bulan berjalan (${last.bulan}) &mdash; data diperbarui ${tglJam}, mengikuti sumber yang ter-link langsung ke realisasi harian.`;
+  document.getElementById('p2tl_live_points').innerHTML = `
+    <div><div style="font-size:10.5px;opacity:.75;text-transform:uppercase;letter-spacing:.3px;">Realisasi bulan (${last.bulan})</div><div style="font-size:19px;font-weight:800;">${last.rb.toLocaleString('id-ID')} kWh</div></div>
+    <div><div style="font-size:10.5px;opacity:.75;text-transform:uppercase;letter-spacing:.3px;">Target bulanan (${last.bulan})</div><div style="font-size:19px;font-weight:800;">${last.tb.toLocaleString('id-ID')} kWh</div></div>
+    <div><div style="font-size:10.5px;opacity:.75;text-transform:uppercase;letter-spacing:.3px;">Realisasi s.d ${last.bulan}</div><div style="font-size:19px;font-weight:800;">${last.cumR.toLocaleString('id-ID')} kWh</div></div>
+    <div><div style="font-size:10.5px;opacity:.75;text-transform:uppercase;letter-spacing:.3px;">Target kumulatif s.d ${last.bulan}</div><div style="font-size:19px;font-weight:800;">${last.cumT.toLocaleString('id-ID')} kWh</div></div>`;
   const reguTad = num(document.getElementById('p2tl_regu_tad').value);
   const reguMandiri = num(document.getElementById('p2tl_regu_mandiri').value);
   const ts = num(document.getElementById('p2tl_ts').value);
@@ -1224,6 +1231,7 @@ function p2tlRecalc(){
     <div class="exec-side-item"><div class="lbl">Jumlah regu P2TL TAD</div><div class="val">${reguTad} Regu</div></div>
     <div class="exec-side-item"><div class="lbl">Jumlah regu P2TL Mandiri</div><div class="val">${reguMandiri} Regu</div></div>
     <div class="exec-side-item"><div class="lbl">Total regu operasional</div><div class="val">${totalRegu} Regu</div></div>
+    <div class="exec-side-item"><div class="lbl">Realisasi bulan berjalan (${last.bulan})</div><div class="val">${last.rb.toLocaleString('id-ID')} kWh</div></div>
     <div class="exec-side-item"><div class="lbl">Target kumulatif s.d ${last.bulan}</div><div class="val">${last.cumT.toLocaleString('id-ID')} kWh</div></div>
     <div class="exec-side-item"><div class="lbl">Realisasi kumulatif</div><div class="val">${last.cumR.toLocaleString('id-ID')} kWh</div></div>
     <div class="exec-side-item"><div class="lbl">Persentase capaian</div><div class="val">${capaian.toFixed(2)}%</div></div>
@@ -1233,6 +1241,7 @@ function p2tlRecalc(){
     <div class="exec-side-item"><div class="lbl">Benefit cost ratio</div><div class="val">${bcr.toFixed(2)}</div></div>`;
 
   document.getElementById('p2tl_kpi').innerHTML = `
+    <div class="kpi-card ${pctBulanan>=100?'green':'amber'}"><div class="kpi-label">Realisasi bulan berjalan (${last.bulan})</div><div class="kpi-value">${last.rb.toLocaleString('id-ID')} kWh</div><div class="kpi-sub">${pctBulanan.toFixed(1)}% dari target bulanan ${last.tb.toLocaleString('id-ID')} kWh &middot; s.d hari ini</div></div>
     <div class="kpi-card"><div class="kpi-label">Realisasi energi kumulatif</div><div class="kpi-value">${last.cumR.toLocaleString('id-ID')} kWh</div><div class="kpi-sub">${capaian.toFixed(2)}% vs target kumulatif</div></div>
     <div class="kpi-card green"><div class="kpi-label">Target kumulatif s.d ${last.bulan}</div><div class="kpi-value">${last.cumT.toLocaleString('id-ID')} kWh</div></div>
     <div class="kpi-card purple"><div class="kpi-label">Gap terhadap target</div><div class="kpi-value">${gap.toLocaleString('id-ID')} kWh</div><div class="kpi-sub">${gap>0?'▼':'▲'} ${Math.abs(gapPct).toFixed(2)}% ${gap>0?'belum tercapai':'melebihi target'}</div></div>
@@ -1298,50 +1307,89 @@ function p2tlSample(){
   ]);
 }
 
-/* ---- realisasi P2TL per ULP: bulanan vs kumulatif (bukan lagi persentase kontribusi) ---- */
+/* ---- Matriks realisasi P2TL per ULP per bulan (Target/Realisasi/% Capaian), format sama seperti tabel Susut ---- */
 let ulpContribData = [];
+let ulpContribUp3Data = [];
 function p2tlUlpRender(rows){
-  const uKey = findKey(rows[0], ['ulp']);
-  if(!uKey){ setStatus('p2tl_ulp_status', false, 'Kolom ULP tidak ditemukan.'); return; }
+  const uKey = findKey(rows[0], ['ulp','unit']);
+  const bKey = findKey(rows[0], ['bulan']);
+  if(!uKey||!bKey){ setStatus('p2tl_ulp_status', false, 'Kolom ULP/Bulan tidak ditemukan.'); return; }
   const keys = Object.keys(rows[0]);
-  const uIdx = keys.indexOf(uKey);
-  const tbKey = keys[uIdx+1], rbKey = keys[uIdx+2], tkKey = keys[uIdx+3], rkKey = keys[uIdx+4];
+  const bIdx = keys.indexOf(bKey);
+  const tbKey = keys[bIdx+1], rbKey = keys[bIdx+2], tkKey = keys[bIdx+3], rkKey = keys[bIdx+4];
   if(!tbKey||!rbKey||!tkKey||!rkKey){
-    setStatus('p2tl_ulp_status', false, 'Kolom setelah "ULP" kurang dari 4 (Target_Bulanan, Realisasi_Bulanan, Target_Kumulatif, Realisasi_Kumulatif).');
+    setStatus('p2tl_ulp_status', false, 'Kolom setelah "Bulan" kurang dari 4 (Target_Bulanan, Realisasi_Bulanan, Target_Kumulatif, Realisasi_Kumulatif).');
     return;
   }
-  // Buang baris total/agregat "UP3 ..." kalau ada — kolom ini harus berisi ULP individual saja.
   const isUp3Total = ulpName => /^UP3\b/i.test(String(ulpName).trim());
-  ulpContribData = rows.map(r=>({
-    ulp:r[uKey], tb:num(r[tbKey]), rb:num(r[rbKey]), tk:num(r[tkKey]), rk:num(r[rkKey])
-  })).filter(d=>d.ulp && !isUp3Total(d.ulp));
+  const dataAll = rows.map(r=>({
+    ulp:String(r[uKey]||'').trim(), bulan:String(r[bKey]||'').trim(),
+    tb:num(r[tbKey]), rb:num(r[rbKey]), tk:num(r[tkKey]), rk:num(r[rkKey]),
+    rkFilled: num(r[rkKey])>0 || num(r[rbKey])>0
+  })).filter(d=>d.ulp && d.bulan);
+  ulpContribData = dataAll.filter(d=>!isUp3Total(d.ulp));
+  ulpContribUp3Data = dataAll.filter(d=>isUp3Total(d.ulp));
   p2tlUlpRecalc();
   setStatus('p2tl_ulp_status', true, 'Data ULP berhasil dimuat.');
 }
 function p2tlUlpRecalc(){
   if(!ulpContribData.length) return;
-  const sorted = [...ulpContribData].sort((a,b)=>b.rk-a.rk);
+  const ulps = [...new Set(ulpContribData.map(d=>d.ulp))];
+  const bulans = [...new Set(ulpContribData.map(d=>d.bulan))];
 
-  document.getElementById('p2tl_ulp_table').innerHTML = sorted.map(d=>{
-    const pctB = d.tb ? (d.rb/d.tb*100) : 0;
-    const pctK = d.tk ? (d.rk/d.tk*100) : 0;
-    return `<tr>
-      <td>${d.ulp}</td>
-      <td>${d.tb.toLocaleString('id-ID')}</td>
-      <td>${d.rb.toLocaleString('id-ID')}</td>
-      <td><span class="pill ${pctB>=100?'good':'bad'}">${pctB.toFixed(1)}%</span></td>
-      <td>${d.tk.toLocaleString('id-ID')}</td>
-      <td>${d.rk.toLocaleString('id-ID')}</td>
-      <td><span class="pill ${pctK>=100?'good':'bad'}">${pctK.toFixed(1)}%</span></td>
-    </tr>`;
-  }).join('');
+  let thead = '<thead><tr><th>UNIT</th><th>Sat</th>' + bulans.map(b=>`<th>${b}</th>`).join('') + '</tr></thead>';
+  let tbody = '<tbody>';
+  ulps.forEach(u=>{
+    tbody += `<tr><td rowspan="3">${u}</td><td class="label">TARGET</td>` + bulans.map(b=>{
+      const d = ulpContribData.find(x=>x.ulp===u && x.bulan===b);
+      if(!d) return '<td>-</td>';
+      return `<td>${d.tb.toLocaleString('id-ID')}</td>`;
+    }).join('') + '</tr>';
+    tbody += `<tr><td class="label">REAL</td>` + bulans.map(b=>{
+      const d = ulpContribData.find(x=>x.ulp===u && x.bulan===b);
+      if(!d || !d.rkFilled) return '<td>-</td>';
+      return `<td>${d.rb.toLocaleString('id-ID')}</td>`;
+    }).join('') + '</tr>';
+    tbody += `<tr><td class="label">%</td>` + bulans.map(b=>{
+      const d = ulpContribData.find(x=>x.ulp===u && x.bulan===b);
+      if(!d || !d.rkFilled) return '<td>-</td>';
+      const ratio = d.tb ? (d.rb/d.tb*100) : 0;
+      return `<td class="${achievementTierClass(ratio)}">${ratio.toFixed(2)}%</td>`;
+    }).join('') + '</tr>';
+  });
+  // Baris total UP3 MADIUN, kalau ada di CSV
+  if(ulpContribUp3Data.length){
+    tbody += `<tr class="up3-row"><td rowspan="3">UP3 MADIUN</td><td class="label" style="color:#cfe0f0;">TARGET</td>` + bulans.map(b=>{
+      const d3 = ulpContribUp3Data.find(d=>d.bulan===b);
+      return d3 ? `<td>${d3.tb.toLocaleString('id-ID')}</td>` : '<td>-</td>';
+    }).join('') + '</tr>';
+    tbody += `<tr class="up3-row"><td class="label" style="color:#cfe0f0;">REAL</td>` + bulans.map(b=>{
+      const d3 = ulpContribUp3Data.find(d=>d.bulan===b);
+      if(!d3 || !d3.rkFilled) return '<td>-</td>';
+      return `<td>${d3.rb.toLocaleString('id-ID')}</td>`;
+    }).join('') + '</tr>';
+    tbody += `<tr class="up3-row"><td class="label" style="color:#cfe0f0;">%</td>` + bulans.map(b=>{
+      const d3 = ulpContribUp3Data.find(d=>d.bulan===b);
+      if(!d3 || !d3.rkFilled) return '<td>-</td>';
+      const ratio = d3.tb ? (d3.rb/d3.tb*100) : 0;
+      return `<td class="${achievementTierClass(ratio)}">${ratio.toFixed(2)}%</td>`;
+    }).join('') + '</tr>';
+  }
+  tbody += '</tbody>';
+  document.getElementById('p2tl_ulp_matrix').innerHTML = thead + tbody;
 
+  // Chart ringkas: target vs realisasi KUMULATIF per ULP, diambil dari bulan terakhir yang terisi
+  const latestByUlp = ulps.map(u=>{
+    const rowsU = ulpContribData.filter(d=>d.ulp===u && d.rkFilled);
+    const d = rowsU.length ? rowsU[rowsU.length-1] : null;
+    return d ? {ulp:u, tk:d.tk, rk:d.rk} : {ulp:u, tk:0, rk:0};
+  }).sort((a,b)=>b.rk-a.rk);
   destroyChart('p2tl_chart');
   charts['p2tl_chart'] = new Chart(document.getElementById('p2tl_chart'), {
     type:'bar',
-    data:{ labels:sorted.map(d=>d.ulp), datasets:[
-      {label:'Target kumulatif', data:sorted.map(d=>d.tk), backgroundColor:'#1f6fc6', borderRadius:4, maxBarThickness:22},
-      {label:'Realisasi kumulatif', data:sorted.map(d=>d.rk), backgroundColor:'#1c8a4a', borderRadius:4, maxBarThickness:22}]},
+    data:{ labels:latestByUlp.map(d=>d.ulp), datasets:[
+      {label:'Target kumulatif', data:latestByUlp.map(d=>d.tk), backgroundColor:'#1f6fc6', borderRadius:4, maxBarThickness:22},
+      {label:'Realisasi kumulatif', data:latestByUlp.map(d=>d.rk), backgroundColor:'#1c8a4a', borderRadius:4, maxBarThickness:22}]},
     options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom', labels:{boxWidth:10, font:{size:11}}}},
       scales:{ y:{beginAtZero:true} } }
   });
@@ -1353,15 +1401,35 @@ async function p2tlUlpLoad(){
   try{ p2tlUlpRender(await fetchCSV(url)); } catch(e){ setStatus('p2tl_ulp_status', false, 'Gagal memuat: ' + e.message); }
 }
 function p2tlUlpSample(){
-  p2tlUlpRender([
-    {ULP:'MADIUN KOTA', Target_Bulanan:'136916', Realisasi_Bulanan:'10744', Target_Kumulatif:'901520', Realisasi_Kumulatif:'687520'},
-    {ULP:'NGAWI', Target_Bulanan:'136916', Realisasi_Bulanan:'10744', Target_Kumulatif:'901520', Realisasi_Kumulatif:'687520'},
-    {ULP:'MAGETAN', Target_Bulanan:'135920', Realisasi_Bulanan:'10665', Target_Kumulatif:'894514', Realisasi_Kumulatif:'682514'},
-    {ULP:'CARUBAN', Target_Bulanan:'104000', Realisasi_Bulanan:'8160', Target_Kumulatif:'684000', Realisasi_Kumulatif:'522000'},
-    {ULP:'MANTINGAN', Target_Bulanan:'85000', Realisasi_Bulanan:'6670', Target_Kumulatif:'560000', Realisasi_Kumulatif:'427000'},
-    {ULP:'DOLOPO', Target_Bulanan:'85000', Realisasi_Bulanan:'6670', Target_Kumulatif:'560000', Realisasi_Kumulatif:'427000'},
-    {ULP:'MAOSPATI', Target_Bulanan:'75686', Realisasi_Bulanan:'5940', Target_Kumulatif:'496884', Realisasi_Kumulatif:'380000'},
-  ]);
+  const bulans = ['JAN','FEB','MAR','APR','MEI','JUN','JUL'];
+  const tb = {
+    'MADIUN KOTA':[160873,144785,136742,168916,128698,161878,161878],
+    'MAGETAN':    [159735,143762,135775,167613,127632,160734,160734],
+    'NGAWI':      [160873,144785,136742,168916,128698,161878,161878],
+    'MAOSPATI':   [88841,79957,75515,93198,71204,89396,89396],
+    'CARUBAN':    [122279,110051,103937,128213,97952,123043,123043],
+    'DOLOPO':     [100114,90103,85097,104958,80200,100740,100740],
+    'MANTINGAN':  [100142,90128,85121,104985,80221,100768,100768],
+  };
+  const rb = {
+    'MADIUN KOTA':[81226,17033,29455,95840,128698,161878,10744],
+    'MAGETAN':    [63408,58414,85936,96513,127632,160734,10665],
+    'NGAWI':      [129417,124880,112455,162359,163361,161878,10744],
+    'MAOSPATI':   [41495,42046,56412,60357,71204,89396,5940],
+    'CARUBAN':    [36584,68686,73282,80964,146418,123043,8160],
+    'DOLOPO':     [46296,36987,113614,46459,80200,100740,6670],
+    'MANTINGAN':  [61227,109040,116635,133327,80221,100768,6670],
+  };
+  const rows = [];
+  const cumT = {}, cumR = {};
+  Object.keys(tb).forEach(u=>{ cumT[u]=0; cumR[u]=0; });
+  bulans.forEach((b,i)=>{
+    Object.keys(tb).forEach(u=>{
+      cumT[u]+=tb[u][i]; cumR[u]+=rb[u][i];
+      rows.push({ULP:u, Bulan:b, Target_Bulanan:tb[u][i], Realisasi_Bulanan:rb[u][i], Target_Kumulatif:cumT[u], Realisasi_Kumulatif:cumR[u]});
+    });
+  });
+  p2tlUlpRender(rows);
 }
 
 /* ================= TAB 5: GANTI METER & AMRISASI ================= */
